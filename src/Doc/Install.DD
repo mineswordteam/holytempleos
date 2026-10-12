@@ -1,4 +1,14 @@
-$WW,1$$FG,5$$TX+CX,"Installing ZealOS"$$FG$
+$WW,1$$FG,5$$TX+CX,"Installing Holy TempleOS"$$FG$
+
+$FG,14$Easy install (3 steps)$FG$
+1) Boot the disc (or ISO in your virtual machine).
+2) Answer $FG,2$Y$FG$ to "Install Holy TempleOS onto the hard drive".
+3) Follow the questions. In a virtual machine the first disk is erased and set up for you. When it says done, reboot and remove the disc.
+
+$BK,1$WARNING:$BK,0$ installing in a virtual machine ERASES the first virtual disk. On a real computer, prepare a partition first (see below).
+
+Advanced details follow.
+
 
 Burn a CD with software that supports ISO files.	Then, boot it.	It's a live CD, so you can look around with or without installing.
 

@@ -1,0 +1,23 @@
+$WW,1$$FG,14$$TX+CX,"Holy TempleOS Games"$$FG$
+$TX+CX,"Click a game to play. Made by Minesword Team - based on TempleOS"$
+
+$MA,"Talons",LM="Cd(\"::/Demo/Games\");#include \"Talons\";\n"$   $MA,"Chess",LM="Cd(\"::/Demo/Games\");#include \"Chess\";\n"$   $MA,"Tic Tac Toe",LM="Cd(\"::/Demo/Games\");#include \"TicTacToe\";\n"$
+
+$MA,"Black Diamond",LM="Cd(\"::/Demo/Games\");#include \"BlackDiamond\";\n"$   $MA,"Battle Lines",LM="Cd(\"::/Demo/Games\");#include \"BattleLines\";\n"$   $MA,"Big Guns",LM="Cd(\"::/Demo/Games\");#include \"BigGuns\";\n"$
+
+$MA,"Bomber Golf",LM="Cd(\"::/Demo/Games\");#include \"BomberGolf\";\n"$   $MA,"Castle Frankenstein",LM="Cd(\"::/Demo/Games\");#include \"CastleFrankenstein\";\n"$   $MA,"Flap Bat",LM="Cd(\"::/Demo/Games\");#include \"FlapBat\";\n"$
+
+$MA,"Flat Tops",LM="Cd(\"::/Demo/Games\");#include \"FlatTops\";\n"$   $MA,"Halogen",LM="Cd(\"::/Demo/Games\");#include \"Halogen\";\n"$   $MA,"Maze",LM="Cd(\"::/Demo/Games\");#include \"Maze\";\n"$
+
+$MA,"Rain Drops",LM="Cd(\"::/Demo/Games\");#include \"RainDrops\";\n"$   $MA,"Raw Hide",LM="Cd(\"::/Demo/Games\");#include \"RawHide\";\n"$   $MA,"Rocket",LM="Cd(\"::/Demo/Games\");#include \"Rocket\";\n"$
+
+$MA,"Rocket Science",LM="Cd(\"::/Demo/Games\");#include \"RocketScience\";\n"$   $MA,"Squirt",LM="Cd(\"::/Demo/Games\");#include \"Squirt\";\n"$   $MA,"The Dead",LM="Cd(\"::/Demo/Games\");#include \"TheDead\";\n"$
+
+$MA,"Tree Checkers",LM="Cd(\"::/Demo/Games\");#include \"TreeCheckers\";\n"$   $MA,"Varoom",LM="Cd(\"::/Demo/Games\");#include \"Varoom\";\n"$   $MA,"Wenceslas",LM="Cd(\"::/Demo/Games\");#include \"Wenceslas\";\n"$
+
+$MA,"Whap",LM="Cd(\"::/Demo/Games\");#include \"Whap\";\n"$   $MA,"Zing",LM="Cd(\"::/Demo/Games\");#include \"Zing\";\n"$   $MA,"Zone Out",LM="Cd(\"::/Demo/Games\");#include \"ZoneOut\";\n"$
+
+$MA,"DunGen",LM="Cd(\"::/Demo/Games\");#include \"DunGen\";\n"$   $MA,"Elephant Walk",LM="Cd(\"::/Demo/Games\");#include \"ElephantWalk\";\n"$   $MA,"Circle Trace",LM="Cd(\"::/Demo/Games\");#include \"CircleTrace\";\n"$
+
+$MA,"Collision",LM="Cd(\"::/Demo/Games\");#include \"Collision\";\n"$   $MA,"Digits",LM="Cd(\"::/Demo/Games\");#include \"Digits\";\n"$
+

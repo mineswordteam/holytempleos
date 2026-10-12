@@ -1,0 +1,1535 @@
+// Holy TempleOS Launcher v3 - by Minesword Team (based on TempleOS)
+// Home (cannot be closed), Games, Settings, bottom panel, PIN lock.
+CBGR24 hl_pal_bright[16] = {0x1B1B3A, 0x2F5BD8, 0x14935A, 0x0E8FA8, 0xD3304A, 0x7A3FD1, 0xC27A0E, 0xD9DEEE,
+	0x6A7396, 0x5B8CFF, 0x45CF85, 0x45C8E0, 0xFF6A80, 0xA57CFF, 0xFFC53D, 0xF7F9FF};
+CBGR24 hl_pal_dark[16] = {0xEDEAFB, 0x7C93FF, 0x5FD79A, 0x4FC3D9, 0xF0627A, 0xB07CF0, 0xE0A03A, 0x2A2750,
+	0x4B4690, 0xA9B8FF, 0x9BF0C2, 0x9BE6F2, 0xFF9AA8, 0xD4B0FF, 0xFFD966, 0x14122B};
+
+class HLItem
+{
+	U8 *label;
+	U8 *cmd;
+	I64 light;
+	I64 dark;
+	I64 icon;
+	I64 kind;
+	I64 arg;
+};
+HLItem hl_items[40];
+I64 hl_n = 0, hl_hover = -1, hl_screen = 3, hl_theme = 0;
+I64 hl_exit = FALSE, hl_term = FALSE, hl_booting = TRUE, hl_after = 0, hl_prev = 0, hl_pinmode = 0;
+I64 hl_len = 0, hl_wrong = 0, hl_keyhover = -1, hl_panel = FALSE, hl_pbhover = -1, hl_pbn = 0;
+I64 hl_pbx[8], hl_pby[8], hl_pbw[8], hl_pbh[8];
+I64 hl_kx[12], hl_ky[12], hl_ks = 0;
+U8 hl_run[256];
+U8 hl_pin[16] = "0000";
+U8 hl_entry[16];
+U8 hl_clock[16];
+U8 hl_date[24];
+U8 hl_plab[16];
+U8 hl_notes[4][72];
+I64 hl_note_n = 0;
+
+U0 HLNote(U8 *s)
+{
+	I64 i;
+	for (i = 3; i > 0; i--)
+		StrCopy(hl_notes[i], hl_notes[i - 1]);
+	StrCopy(hl_notes[0], s);
+	if (hl_note_n < 4)
+		hl_note_n++;
+}
+
+U0 HLTheme(I64 t)
+{
+	hl_theme = t;
+	if (t == 0)
+		GrPaletteSet(hl_pal_bright);
+	else if (t == 1)
+		GrPaletteSet(hl_pal_dark);
+	else
+		GrPaletteSet(gr32_palette_std);
+	LFBFlush;
+}
+
+U0 HLAdd(U8 *label, U8 *cmd, I64 light, I64 dark, I64 icon, I64 kind, I64 arg)
+{
+	hl_items[hl_n].label = label;
+	hl_items[hl_n].cmd = cmd;
+	hl_items[hl_n].light = light;
+	hl_items[hl_n].dark = dark;
+	hl_items[hl_n].icon = icon;
+	hl_items[hl_n].kind = kind;
+	hl_items[hl_n].arg = arg;
+	hl_n++;
+}
+
+U0 HLBig(CDC *dc, I64 x, I64 y, U8 *s, I64 sc, I64 color)
+{
+	I64 r, c;
+	U8 *f = text.font;
+	U8 bits;
+	dc->color = color;
+	while (*s)
+	{
+		for (r = 0; r < 8; r++)
+		{
+			bits = f[*s * 8 + r];
+			for (c = 0; c < 8; c++)
+				if (bits & (1 << c))
+					GrRect(dc, x + c * sc, y + r * sc, sc, sc);
+		}
+		x += 8 * sc;
+		s++;
+	}
+}
+
+I64 HLWidth(U8 *s, I64 sc)
+{
+	return StrLen(s) * 8 * sc;
+}
+
+U0 HLRect(CDC *dc, I64 x, I64 y, I64 w, I64 h, I64 color)
+{
+	dc->color = color;
+	GrRect(dc, x, y, w, h);
+}
+
+U0 HLDisc(CDC *dc, I64 cx, I64 cy, I64 r, I64 color)
+{
+	I64 dy, w;
+	dc->color = color;
+	for (dy = -r; dy <= r; dy++)
+	{
+		w = ToI64(Sqrt(ToF64(r * r - dy * dy)));
+		GrRect(dc, cx - w, cy + dy, 2 * w + 1, 1);
+	}
+}
+
+U0 HLTriUp(CDC *dc, I64 cx, I64 top, I64 half, I64 h, I64 color)
+{
+	I64 i, w;
+	dc->color = color;
+	for (i = 0; i < h; i++)
+	{
+		w = half * (i + 1) / h;
+		GrRect(dc, cx - w, top + i, 2 * w + 1, 1);
+	}
+}
+
+U0 HLTriDown(CDC *dc, I64 cx, I64 top, I64 half, I64 h, I64 color)
+{
+	I64 i, w;
+	dc->color = color;
+	for (i = 0; i < h; i++)
+	{
+		w = half * (h - i) / h;
+		GrRect(dc, cx - w, top + i, 2 * w + 1, 1);
+	}
+}
+
+U0 HLTriLeft(CDC *dc, I64 left, I64 cy, I64 half, I64 wd, I64 color)
+{
+	I64 i, w;
+	dc->color = color;
+	for (i = 0; i < wd; i++)
+	{
+		w = half * (i + 1) / wd;
+		GrRect(dc, left + i, cy - w, 1, 2 * w + 1);
+	}
+}
+
+U0 HLIconB(CDC *dc, I64 id, I64 cx, I64 cy, I64 u, I64 fg, I64 ac)
+{
+	I64 i, j;
+	switch (id)
+	{
+		case 20: //games: controller
+			HLRect(dc, cx - 5 * u, cy - 2 * u, 10 * u, 5 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - u, u, 3 * u, ac);
+			HLRect(dc, cx - 4 * u, cy, 3 * u, u, ac);
+			HLDisc(dc, cx + 2 * u, cy - u / 2, u / 2 + 1, ac);
+			HLDisc(dc, cx + 4 * u, cy + u, u / 2 + 1, ac);
+			break;
+		case 21: //settings: gear
+			HLRect(dc, cx - u / 2, cy - 4 * u, u, 8 * u, fg);
+			HLRect(dc, cx - 4 * u, cy - u / 2, 8 * u, u, fg);
+			HLRect(dc, cx - 3 * u, cy - 3 * u, 2 * u, 2 * u, fg);
+			HLRect(dc, cx + u, cy - 3 * u, 2 * u, 2 * u, fg);
+			HLRect(dc, cx - 3 * u, cy + u, 2 * u, 2 * u, fg);
+			HLRect(dc, cx + u, cy + u, 2 * u, 2 * u, fg);
+			HLDisc(dc, cx, cy, 3 * u, fg);
+			HLDisc(dc, cx, cy, u + u / 2, ac);
+			break;
+		case 22: //sun
+			HLDisc(dc, cx, cy, 2 * u, fg);
+			HLRect(dc, cx - u / 2, cy - 4 * u, u, u, fg);
+			HLRect(dc, cx - u / 2, cy + 3 * u, u, u, fg);
+			HLRect(dc, cx - 4 * u, cy - u / 2, u, u, fg);
+			HLRect(dc, cx + 3 * u, cy - u / 2, u, u, fg);
+			HLRect(dc, cx - 3 * u, cy - 3 * u, u, u, fg);
+			HLRect(dc, cx + 2 * u, cy - 3 * u, u, u, fg);
+			HLRect(dc, cx - 3 * u, cy + 2 * u, u, u, fg);
+			HLRect(dc, cx + 2 * u, cy + 2 * u, u, u, fg);
+			break;
+		case 23: //moon
+			HLDisc(dc, cx, cy, 3 * u, fg);
+			HLDisc(dc, cx + u + u / 2, cy - u, 3 * u, ac);
+			break;
+		case 24: //classic
+			HLRect(dc, cx - 4 * u, cy - 4 * u, 8 * u, 8 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - 3 * u, 6 * u, 6 * u, ac);
+			HLRect(dc, cx - 2 * u, cy - 2 * u, 4 * u, 4 * u, fg);
+			break;
+		case 25: //padlock
+			HLRect(dc, cx - 2 * u, cy - 4 * u, 4 * u + 1, u / 2 + 1, fg);
+			HLRect(dc, cx - 2 * u, cy - 4 * u, u / 2 + 1, 4 * u, fg);
+			HLRect(dc, cx + 2 * u, cy - 4 * u, u / 2 + 1, 4 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - u, 6 * u + 1, 5 * u, fg);
+			HLDisc(dc, cx, cy + u, u / 2 + 1, ac);
+			HLRect(dc, cx - u / 4, cy + u, u / 2 + 1, 2 * u, ac);
+			break;
+		case 26: //wifi bars
+			HLRect(dc, cx - 4 * u, cy + 2 * u, 2 * u, 2 * u, fg);
+			HLRect(dc, cx - u, cy - u, 2 * u, 5 * u, fg);
+			HLRect(dc, cx + 2 * u, cy - 4 * u, 2 * u, 8 * u, fg);
+			break;
+		case 27: //bluetooth
+			HLBig(dc, cx - 4 * u, cy - 4 * u, "B", u, fg);
+			break;
+		case 28: //globe
+			HLDisc(dc, cx, cy, 4 * u, fg);
+			HLRect(dc, cx - 4 * u, cy - u / 2, 8 * u, u / 2 + 1, ac);
+			HLRect(dc, cx - u / 4, cy - 4 * u, u / 2 + 1, 8 * u, ac);
+			HLRect(dc, cx - 3 * u, cy - 2 * u, 6 * u, u / 2 + 1, ac);
+			HLRect(dc, cx - 3 * u, cy + 2 * u, 6 * u, u / 2 + 1, ac);
+			break;
+		case 29: //back
+			HLTriLeft(dc, cx - 4 * u, cy, 4 * u, 4 * u, fg);
+			HLRect(dc, cx, cy - u, 4 * u, 2 * u, fg);
+			break;
+		case 30: //power
+			HLDisc(dc, cx, cy, 4 * u, fg);
+			HLDisc(dc, cx, cy, 3 * u, ac);
+			HLRect(dc, cx - u / 2, cy - 5 * u, u, 5 * u, fg);
+			break;
+		case 31: //bell
+			HLDisc(dc, cx, cy - u, 3 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - u, 6 * u + 1, 3 * u, fg);
+			HLRect(dc, cx - 4 * u, cy + 2 * u, 8 * u + 1, u, fg);
+			HLDisc(dc, cx, cy + 3 * u + u / 2, u / 2 + 1, fg);
+			break;
+		case 32: //folder
+			HLRect(dc, cx - 5 * u, cy - 3 * u, 4 * u, u, fg);
+			HLRect(dc, cx - 5 * u, cy - 2 * u, 10 * u, 6 * u, fg);
+			HLRect(dc, cx - 5 * u, cy - u, 10 * u, u / 2 + 1, ac);
+			break;
+		case 33: //file
+			HLRect(dc, cx - 3 * u, cy - 4 * u, 6 * u, 8 * u, fg);
+			HLRect(dc, cx - 2 * u, cy - u, 4 * u, u / 2 + 1, ac);
+			HLRect(dc, cx - 2 * u, cy + u, 4 * u, u / 2 + 1, ac);
+			HLRect(dc, cx - 2 * u, cy + 3 * u, 3 * u, u / 2 + 1, ac);
+			break;
+	}
+}
+
+//SPLIT
+//SPLIT
+U0 HLIcon(CDC *dc, I64 id, I64 cx, I64 cy, I64 u, I64 fg, I64 ac)
+{
+	I64 i, j;
+	switch (id)
+	{
+		case 0:
+			HLRect(dc, cx - u, cy - 4 * u, 2 * u, 3 * u, fg);
+			HLTriDown(dc, cx, cy - u, 3 * u, 3 * u, fg);
+			HLRect(dc, cx - 4 * u, cy + 3 * u, 8 * u, u, fg);
+			HLRect(dc, cx - 4 * u, cy + 2 * u, u, 2 * u, fg);
+			HLRect(dc, cx + 3 * u, cy + 2 * u, u, 2 * u, fg);
+			break;
+		case 1:
+			HLTriUp(dc, cx, cy - 4 * u, 5 * u, 4 * u, fg);
+			HLRect(dc, cx - 3 * u, cy, 6 * u, 4 * u, fg);
+			HLRect(dc, cx - u, cy + u, 2 * u, 3 * u, ac);
+			break;
+		case 2:
+			HLBig(dc, cx - 4 * u, cy - 5 * u, "?", u, fg);
+			break;
+		case 3:
+			HLRect(dc, cx - 5 * u, cy - 4 * u, 10 * u, 8 * u, fg);
+			HLRect(dc, cx - 4 * u, cy - 3 * u, 8 * u, 6 * u, ac);
+			HLBig(dc, cx - 4 * u, cy - 2 * u, ">_", u / 2 + 1, fg);
+			break;
+		case 4:
+			for (i = 0; i < 4; i++)
+				for (j = 0; j < 4; j++)
+				{
+					if ((i + j) % 2)
+						HLRect(dc, cx - 4 * u + i * 2 * u, cy - 4 * u + j * 2 * u, 2 * u, 2 * u, ac);
+					else
+						HLRect(dc, cx - 4 * u + i * 2 * u, cy - 4 * u + j * 2 * u, 2 * u, 2 * u, fg);
+				}
+			break;
+		case 5:
+			HLRect(dc, cx - u, cy - 4 * u, u / 2 + 1, 8 * u, fg);
+			HLRect(dc, cx + u, cy - 4 * u, u / 2 + 1, 8 * u, fg);
+			HLRect(dc, cx - 4 * u, cy - u, 8 * u, u / 2 + 1, fg);
+			HLRect(dc, cx - 4 * u, cy + u, 8 * u, u / 2 + 1, fg);
+			for (i = 0; i < 2 * u; i++)
+			{
+				HLRect(dc, cx - 4 * u + i, cy - 4 * u + i, u / 2 + 1, u / 2 + 1, fg);
+				HLRect(dc, cx - 2 * u - i, cy - 4 * u + i, u / 2 + 1, u / 2 + 1, fg);
+			}
+			HLDisc(dc, cx + 3 * u, cy + 3 * u, u, fg);
+			HLDisc(dc, cx + 3 * u, cy + 3 * u, u / 2, ac);
+			break;
+		case 6:
+			HLTriUp(dc, cx, cy - 4 * u, 4 * u, 8 * u, fg);
+			HLRect(dc, cx - u / 2, cy + 3 * u, u, 2 * u, fg);
+			HLRect(dc, cx - u / 2, cy - 2 * u, u, 4 * u, ac);
+			break;
+		case 7:
+			for (i = -4 * u; i <= 4 * u; i++)
+			{
+				j = 4 * u - AbsI64(i);
+				HLRect(dc, cx - j, cy + i, 2 * j + 1, 1, fg);
+			}
+			HLRect(dc, cx - u / 2, cy - 2 * u, u, 4 * u, ac);
+			break;
+		case 8:
+			HLDisc(dc, cx, cy, 2 * u, fg);
+			HLTriUp(dc, cx - 4 * u, cy - 2 * u, 2 * u, 4 * u, fg);
+			HLTriUp(dc, cx + 4 * u, cy - 2 * u, 2 * u, 4 * u, fg);
+			HLDisc(dc, cx - u, cy - u / 2, u / 2, ac);
+			HLDisc(dc, cx + u, cy - u / 2, u / 2, ac);
+			break;
+		case 9:
+			HLRect(dc, cx - 5 * u, cy, 10 * u, 3 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - 2 * u, 6 * u, 2 * u, fg);
+			HLRect(dc, cx - 2 * u, cy - u, 4 * u, u, ac);
+			HLDisc(dc, cx - 3 * u, cy + 3 * u, u + u / 2, ac);
+			HLDisc(dc, cx + 3 * u, cy + 3 * u, u + u / 2, ac);
+			break;
+		case 10:
+			HLDisc(dc, cx, cy, 4 * u, fg);
+			HLDisc(dc, cx, cy, 3 * u, ac);
+			HLDisc(dc, cx, cy, 2 * u, fg);
+			HLDisc(dc, cx, cy, u, ac);
+			break;
+		case 11:
+			HLRect(dc, cx - 3 * u, cy - 4 * u, u / 2 + 1, 8 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - 4 * u, 4 * u, 3 * u, fg);
+			HLRect(dc, cx + 2 * u, cy - 4 * u, u / 2 + 1, 8 * u, ac);
+			HLRect(dc, cx + 2 * u, cy - 4 * u, 4 * u, 3 * u, ac);
+			break;
+		case 12:
+			HLDisc(dc, cx, cy + 2 * u, 4 * u, fg);
+			HLRect(dc, cx, cy - 4 * u, u / 2 + 1, 6 * u, ac);
+			HLTriUp(dc, cx + 2 * u, cy - 4 * u, 2 * u, 3 * u, ac);
+			HLDisc(dc, cx - 2 * u, cy + 3 * u, u, ac);
+			break;
+		case 13:
+			for (i = -1; i <= 1; i++)
+			{
+				HLTriUp(dc, cx + i * 3 * u, cy - 3 * u + AbsI64(i) * u, u, 2 * u, fg);
+				HLDisc(dc, cx + i * 3 * u, cy - u + AbsI64(i) * u, u, fg);
+			}
+			HLRect(dc, cx - 5 * u, cy + 4 * u, 10 * u, u / 2 + 1, ac);
+			break;
+		case 14:
+			HLRect(dc, cx - 5 * u, cy - 4 * u, 10 * u, 8 * u, fg);
+			HLRect(dc, cx - 3 * u, cy - 2 * u, 6 * u, 4 * u, ac);
+			HLRect(dc, cx - u, cy - u, 2 * u, 2 * u, fg);
+			break;
+		case 15:
+			HLTriDown(dc, cx + u, cy - 4 * u, 3 * u, 4 * u, fg);
+			HLTriUp(dc, cx - u, cy, 3 * u, 4 * u, fg);
+			break;
+		case 16:
+			HLRect(dc, cx - 5 * u, cy - 4 * u, 10 * u, u / 2 + 1, fg);
+			HLRect(dc, cx - 5 * u, cy + 4 * u, 10 * u, u / 2 + 1, fg);
+			HLRect(dc, cx - 5 * u, cy - 4 * u, u / 2 + 1, 8 * u, fg);
+			HLRect(dc, cx + 5 * u, cy - 4 * u, u / 2 + 1, 8 * u + 1, fg);
+			HLRect(dc, cx - 2 * u, cy - 4 * u, u / 2 + 1, 5 * u, fg);
+			HLRect(dc, cx + 2 * u, cy - u, u / 2 + 1, 5 * u, fg);
+			HLRect(dc, cx - 2 * u, cy, 4 * u, u / 2 + 1, ac);
+			break;
+		case 17:
+			HLDisc(dc, cx - u, cy + u, 3 * u, fg);
+			HLRect(dc, cx - 4 * u, cy + u, 6 * u, 3 * u, fg);
+			HLDisc(dc, cx - 2 * u, cy, u / 2, ac);
+			HLDisc(dc, cx, cy, u / 2, ac);
+			HLRect(dc, cx + 2 * u, cy - 4 * u, 3 * u, 2 * u, ac);
+			HLRect(dc, cx + 3 * u, cy - 2 * u, u, 4 * u, ac);
+			break;
+		case 18:
+			HLDisc(dc, cx - 2 * u, cy, 3 * u, fg);
+			HLDisc(dc, cx + 2 * u, cy, 3 * u, ac);
+			break;
+		case 19:
+			HLBig(dc, cx - 4 * u, cy - 2 * u, "123", u * 2 / 3, fg);
+			break;
+		default:
+			HLIconB(dc, id, cx, cy, u, fg, ac);
+			break;
+	}
+}
+//SPLIT
+// ================= FILE MANAGER =================
+U8 fm_path[256] = "T:/";
+U8 fm_names[200][40];
+U8 fm_tn[200][40];
+I64 fm_td[200], fm_ts[200], fm_tt[200];
+I64 fm_dir[200], fm_size[200], fm_ord[200], fm_date[200];
+I64 fm_n = 0, fm_scroll = 0, fm_sel = -1, fm_rows = 10;
+U8 fm_clip[256];
+I64 fm_clipdir = FALSE, fm_cut = FALSE, fm_confirm = FALSE, fm_mode = 0, fm_rowhover = -1, fm_bhover = -1, fm_dhover = -1, fm_shover = 0;
+U8 fm_input[48];
+I64 fm_ilen = 0;
+I64 fm_bx[12], fm_by[12], fm_bw[12], fm_bh[12];
+I64 fm_dx[26], fm_dy[26], fm_dw[26], fm_dh[26], fm_dl[26], fm_dn = 0;
+I64 fm_ry0 = 0, fm_rh = 1, fm_rx0 = 0, fm_rw = 1;
+U8 fm_tmp[300];
+U8 fm_lab[16];
+
+U0 HLFMFull(I64 i, U8 *out)
+{
+	if (StrLen(fm_path) <= 3)
+		StrPrint(out, "%s%s", fm_path, fm_names[i]);
+	else
+		StrPrint(out, "%s/%s", fm_path, fm_names[i]);
+}
+
+U0 HLFMLoad()
+{
+	CDirEntry *list, *de;
+	U8 mask[300];
+	I64 i, j, t, c;
+	fm_n = 0;
+	fm_scroll = 0;
+	fm_sel = -1;
+	fm_confirm = FALSE;
+	if (StrLen(fm_path) <= 3)
+		StrPrint(mask, "%s*", fm_path);
+	else
+		StrPrint(mask, "%s/*", fm_path);
+	list = FilesFind(mask, 0);
+	de = list;
+	while (de && fm_n < 200)
+	{
+		if (StrCompare(de->name, ".") && StrCompare(de->name, ".."))
+		{
+			StrCopy(fm_names[fm_n], de->name);
+			if (de->attr & RS_ATTR_DIR)
+				fm_dir[fm_n] = 1;
+			else
+				fm_dir[fm_n] = 0;
+			fm_size[fm_n] = de->size;
+			fm_date[fm_n] = de->datetime;
+			fm_ord[fm_n] = fm_n;
+			fm_n++;
+		}
+		de = de->next;
+	}
+	if (list)
+		DirTreeDel(list);
+	for (i = 0; i < fm_n; i++)
+		for (j = 0; j < fm_n - 1 - i; j++)
+		{
+			c = 0;
+			if (fm_dir[fm_ord[j]] < fm_dir[fm_ord[j + 1]])
+				c = 1;
+			else if (fm_dir[fm_ord[j]] == fm_dir[fm_ord[j + 1]] && StrICompare(fm_names[fm_ord[j]], fm_names[fm_ord[j + 1]]) > 0)
+				c = 1;
+			if (c)
+			{
+				t = fm_ord[j];
+				fm_ord[j] = fm_ord[j + 1];
+				fm_ord[j + 1] = t;
+			}
+		}
+	for (i = 0; i < fm_n; i++)
+	{
+		StrCopy(fm_tn[i], fm_names[fm_ord[i]]);
+		fm_td[i] = fm_dir[fm_ord[i]];
+		fm_ts[i] = fm_size[fm_ord[i]];
+		fm_tt[i] = fm_date[fm_ord[i]];
+	}
+	for (i = 0; i < fm_n; i++)
+	{
+		StrCopy(fm_names[i], fm_tn[i]);
+		fm_dir[i] = fm_td[i];
+		fm_size[i] = fm_ts[i];
+		fm_date[i] = fm_tt[i];
+		fm_ord[i] = i;
+	}
+	fm_dn = 0;
+	for (c = 'A'; c <= 'Z'; c++)
+		if (fm_dn < 26 && Letter2Drive(c, FALSE))
+		{
+			fm_dl[fm_dn] = c;
+			fm_dn++;
+		}
+}
+
+U0 HLFMUp()
+{
+	I64 i = StrLen(fm_path) - 1;
+	if (i <= 2)
+		return;
+	while (i > 2 && fm_path[i] != '/')
+		i--;
+	if (i <= 2)
+		fm_path[3] = 0;
+	else
+		fm_path[i] = 0;
+	HLFMLoad;
+}
+
+//SPLIT
+U0 HLFMOpen(I64 idx)
+{
+	U8 full[300];
+	U8 *ext;
+	if (idx < 0 || idx >= fm_n)
+		return;
+	HLFMFull(idx, full);
+	if (fm_dir[idx])
+	{
+		StrCopy(fm_path, full);
+		HLFMLoad;
+		return;
+	}
+	ext = FileExtDot(fm_names[idx]);
+	StrPrint(hl_run, "Ed(\"%s\");", full);
+	hl_exit = TRUE;
+}
+
+U0 HLFMRun(I64 idx)
+{
+	U8 full[300];
+	U8 *ext;
+	if (idx < 0 || idx >= fm_n || fm_dir[idx])
+		return;
+	ext = FileExtDot(fm_names[idx]);
+	if (ext && !StrICompare(ext, ".ZC"))
+	{
+		HLFMFull(idx, full);
+		StrPrint(hl_run, "ExeFile(\"%s\");", full);
+		hl_exit = TRUE;
+	}
+	else
+		HLNote("RUN works on .ZC programs only.");
+}
+
+Bool HLFMMove(U8 *src, U8 *dst, I64 isdir)
+{
+	if (isdir)
+	{
+		if (CopyTree(src, dst))
+		{
+			DelTree(src);
+			return TRUE;
+		}
+		return FALSE;
+	}
+	return Move(src, dst);
+}
+
+U0 HLFMPaste()
+{
+	U8 dst[300];
+	U8 *base;
+	if (!fm_clip[0])
+	{
+		HLNote("Nothing to paste.");
+		return;
+	}
+	base = StrLastOcc(fm_clip, "/");
+	if (base)
+		base++;
+	else
+		base = fm_clip;
+	if (StrLen(fm_path) <= 3)
+		StrPrint(dst, "%s%s", fm_path, base);
+	else
+		StrPrint(dst, "%s/%s", fm_path, base);
+	if (fm_path[0] == 'T')
+	{
+		HLNote("The disc is read-only.");
+		return;
+	}
+	if (fm_cut)
+	{
+		if (HLFMMove(fm_clip, dst, fm_clipdir))
+			HLNote("Moved.");
+		else
+			HLNote("Move failed.");
+		fm_clip[0] = 0;
+	}
+	else
+	{
+		if (fm_clipdir)
+			fm_n = CopyTree(fm_clip, dst);
+		else
+			fm_n = Copy(fm_clip, dst);
+		if (fm_n)
+			HLNote("Pasted.");
+		else
+			HLNote("Copy failed.");
+	}
+	HLFMLoad;
+}
+
+U0 HLFMDelete()
+{
+	U8 full[300];
+	if (fm_sel < 0)
+	{
+		HLNote("Select a file first.");
+		return;
+	}
+	if (fm_path[0] == 'T')
+	{
+		HLNote("The disc is read-only.");
+		return;
+	}
+	if (!fm_confirm)
+	{
+		fm_confirm = TRUE;
+		HLNote("Press DELETE again to confirm.");
+		return;
+	}
+	HLFMFull(fm_sel, full);
+	if (fm_dir[fm_sel])
+		DelTree(full);
+	else
+		Del(full, FALSE, FALSE, FALSE);
+	HLNote("Deleted.");
+	HLFMLoad;
+}
+
+U0 HLFMEnter()
+{
+	U8 full[300];
+	U8 old[300];
+	if (fm_ilen == 0)
+	{
+		fm_mode = 0;
+		return;
+	}
+	if (fm_path[0] == 'T')
+	{
+		HLNote("The disc is read-only.");
+		fm_mode = 0;
+		return;
+	}
+	if (StrLen(fm_path) <= 3)
+		StrPrint(full, "%s%s", fm_path, fm_input);
+	else
+		StrPrint(full, "%s/%s", fm_path, fm_input);
+	if (fm_mode == 1)
+	{
+		if (DirMake(full))
+			HLNote("Folder created.");
+		else
+			HLNote("Could not create the folder.");
+	}
+	else if (fm_mode == 2 && fm_sel >= 0)
+	{
+		HLFMFull(fm_sel, old);
+		if (HLFMMove(old, full, fm_dir[fm_sel]))
+			HLNote("Renamed.");
+		else
+			HLNote("Rename failed.");
+	}
+	fm_mode = 0;
+	HLFMLoad;
+}
+
+I64 HLFMAction(I64 act)
+{
+	if (act == 0)
+		HLFMUp;
+	else if (act == 1)
+	{
+		if (fm_path[0] == 'T')
+			HLNote("The disc is read-only.");
+		else
+		{
+			fm_mode = 1;
+			fm_input[0] = 0;
+			fm_ilen = 0;
+		}
+	}
+	else if (act == 2 || act == 3)
+	{
+		if (fm_sel < 0)
+			HLNote("Select a file first.");
+		else
+		{
+			HLFMFull(fm_sel, fm_clip);
+			fm_clipdir = fm_dir[fm_sel];
+			if (act == 3)
+				fm_cut = TRUE;
+			else
+				fm_cut = FALSE;
+			HLNote("Copied to the clipboard.");
+		}
+	}
+	else if (act == 4)
+		HLFMPaste;
+	else if (act == 5)
+	{
+		if (fm_sel < 0)
+			HLNote("Select a file first.");
+		else if (fm_path[0] == 'T')
+			HLNote("The disc is read-only.");
+		else
+		{
+			fm_mode = 2;
+			StrCopy(fm_input, fm_names[fm_sel]);
+			fm_ilen = StrLen(fm_input);
+		}
+	}
+	else if (act == 6)
+		HLFMDelete;
+	else if (act == 7)
+		HLFMOpen(fm_sel);
+	else if (act == 8)
+		HLFMRun(fm_sel);
+	else if (act == 9)
+		return 1;
+	return 0;
+}
+
+U0 HLFMKey(I64 k)
+{
+	if (fm_mode)
+	{
+		if (k == CH_ESC)
+			fm_mode = 0;
+		else if (k == '\n')
+			HLFMEnter;
+		else if (k == CH_BACKSPACE)
+		{
+			if (fm_ilen > 0)
+			{
+				fm_ilen--;
+				fm_input[fm_ilen] = 0;
+			}
+		}
+		else if (k >= 32 && k < 127 && fm_ilen < 36)
+		{
+			fm_input[fm_ilen] = k;
+			fm_ilen++;
+			fm_input[fm_ilen] = 0;
+		}
+		return;
+	}
+	if (k == CH_BACKSPACE || k == 'u')
+		HLFMUp;
+	else if (k == '\n' || k == 'o')
+		HLFMOpen(fm_sel);
+	else if (k == 'n')
+		HLFMAction(1);
+	else if (k == 'c')
+		HLFMAction(2);
+	else if (k == 'x')
+		HLFMAction(3);
+	else if (k == 'v')
+		HLFMAction(4);
+	else if (k == 'r')
+		HLFMAction(5);
+	else if (k == 'd')
+		HLFMAction(6);
+	else if (k == 'e')
+		HLFMAction(8);
+	else if (k == 'j' && fm_sel < fm_n - 1)
+	{
+		fm_sel++;
+		fm_confirm = FALSE;
+		if (fm_sel >= fm_scroll + fm_rows)
+			fm_scroll++;
+	}
+	else if (k == 'k' && fm_sel > 0)
+	{
+		fm_sel--;
+		fm_confirm = FALSE;
+		if (fm_sel < fm_scroll)
+			fm_scroll--;
+	}
+	else if (k >= '1' && k <= '9' && k - '1' < fm_dn)
+	{
+		StrPrint(fm_path, "%c:/", fm_dl[k - '1']);
+		HLFMLoad;
+	}
+}
+
+I64 HLFMClick()
+{
+	I64 i;
+	if (fm_mode)
+		return 0;
+	if (fm_dhover >= 0)
+	{
+		StrPrint(fm_path, "%c:/", fm_dl[fm_dhover]);
+		HLFMLoad;
+		return 0;
+	}
+	if (fm_shover == 1 && fm_scroll > 0)
+		fm_scroll -= fm_rows - 1;
+	else if (fm_shover == 2 && fm_scroll + fm_rows < fm_n)
+		fm_scroll += fm_rows - 1;
+	if (fm_scroll < 0)
+		fm_scroll = 0;
+	if (fm_bhover >= 0)
+	{
+		if (HLFMAction(fm_bhover))
+			return 1;
+	}
+	if (fm_rowhover >= 0)
+	{
+		i = fm_rowhover;
+		if (i == fm_sel)
+			HLFMOpen(i);
+		else
+		{
+			fm_sel = i;
+			fm_confirm = FALSE;
+		}
+	}
+	return 0;
+}
+
+//SPLIT
+U0 HLFMDraw(CDC *dc, I64 w, I64 h, I64 sc, I64 mx, I64 my, I64 hdr)
+{
+	I64 i, j, x, y, bw, bh, nb, y0, ly, idx, rows, shown, sw, ns, nsz;
+	CDateStruct ds;
+	U8 buf[64];
+	U8 st[160];
+	y0 = hdr + 8 * sc;
+	bh = 12 * sc;
+	// drive buttons + path
+	fm_dhover = -1;
+	x = 4 * sc;
+	for (i = 0; i < fm_dn; i++)
+	{
+		fm_dx[i] = x;
+		fm_dy[i] = y0;
+		fm_dw[i] = 12 * sc;
+		fm_dh[i] = bh;
+		if (mx >= x && mx < x + 12 * sc && my >= y0 && my < y0 + bh)
+			fm_dhover = i;
+		HLRect(dc, x + sc, y0 + sc, 12 * sc, bh, LTGRAY);
+		if (fm_path[0] == fm_dl[i])
+			HLRect(dc, x, y0, 12 * sc, bh, BLUE);
+		else
+			HLRect(dc, x, y0, 12 * sc, bh, LTBLUE);
+		if (i == fm_dhover)
+			HLRect(dc, x, y0, 12 * sc, bh, BLUE);
+		StrPrint(buf, "%c:", fm_dl[i]);
+		HLBig(dc, x + (12 * sc - HLWidth(buf, sc)) / 2, y0 + (bh - 8 * sc) / 2, buf, sc, WHITE);
+		x += 14 * sc;
+	}
+	HLRect(dc, x + 2 * sc, y0, w - x - 6 * sc, bh, LTGRAY);
+	HLBig(dc, x + 4 * sc, y0 + (bh - 8 * sc) / 2, fm_path, sc, BLACK);
+	// toolbar
+	nb = 10;
+	y = y0 + bh + 3 * sc;
+	bw = (w - 8 * sc - (nb - 1) * 2 * sc) / nb;
+	fm_bhover = -1;
+	for (i = 0; i < nb; i++)
+	{
+		fm_bx[i] = 4 * sc + i * (bw + 2 * sc);
+		fm_by[i] = y;
+		fm_bw[i] = bw;
+		fm_bh[i] = bh;
+		if (mx >= fm_bx[i] && mx < fm_bx[i] + bw && my >= y && my < y + bh)
+			fm_bhover = i;
+		if (i == 0) StrCopy(fm_lab, "UP");
+		else if (i == 1) StrCopy(fm_lab, "NEW");
+		else if (i == 2) StrCopy(fm_lab, "COPY");
+		else if (i == 3) StrCopy(fm_lab, "CUT");
+		else if (i == 4) StrCopy(fm_lab, "PASTE");
+		else if (i == 5) StrCopy(fm_lab, "RENAME");
+		else if (i == 6) StrCopy(fm_lab, "DELETE");
+		else if (i == 7) StrCopy(fm_lab, "OPEN");
+		else if (i == 8) StrCopy(fm_lab, "RUN");
+		else StrCopy(fm_lab, "BACK");
+		HLRect(dc, fm_bx[i] + sc, y + sc, bw, bh, LTGRAY);
+		if (i == 6)
+			HLRect(dc, fm_bx[i], y, bw, bh, RED);
+		else if (i == 9)
+			HLRect(dc, fm_bx[i], y, bw, bh, DKGRAY);
+		else if (i == 4 || i == 1)
+			HLRect(dc, fm_bx[i], y, bw, bh, GREEN);
+		else
+			HLRect(dc, fm_bx[i], y, bw, bh, BLUE);
+		if (i == fm_bhover)
+			HLRect(dc, fm_bx[i], y, bw, bh, BLACK);
+		ns = bw / (StrLen(fm_lab) * 8);
+		if (ns > sc) ns = sc;
+		if (ns < 1) ns = 1;
+		HLBig(dc, fm_bx[i] + (bw - HLWidth(fm_lab, ns)) / 2, y + (bh - 8 * ns) / 2, fm_lab, ns, WHITE);
+	}
+	// list
+	ly = y + bh + 3 * sc;
+	fm_rh = 10 * sc;
+	fm_rx0 = 4 * sc;
+	fm_rw = w - 8 * sc - 14 * sc;
+	rows = (h - ly - 18 * sc) / fm_rh;
+	if (rows < 3) rows = 3;
+	fm_rows = rows;
+	fm_ry0 = ly;
+	HLRect(dc, fm_rx0, ly, fm_rw, rows * fm_rh, LTGRAY);
+	fm_rowhover = -1;
+	for (i = 0; i < rows; i++)
+	{
+		idx = fm_scroll + i;
+		if (idx >= fm_n)
+			break;
+		j = fm_ord[idx];
+		y = ly + i * fm_rh;
+		if (idx == fm_sel)
+			HLRect(dc, fm_rx0, y, fm_rw, fm_rh, LTBLUE);
+		else
+		{
+			if (i % 2) dc->color = WHITE; else dc->color = LTGRAY;
+			GrRect(dc, fm_rx0, y, fm_rw, fm_rh);
+		}
+		if (mx >= fm_rx0 && mx < fm_rx0 + fm_rw && my >= y && my < y + fm_rh)
+		{
+			fm_rowhover = idx;
+			HLRect(dc, fm_rx0, y, 3 * sc, fm_rh, YELLOW);
+		}
+		if (fm_dir[j])
+			HLIcon(dc, 32, fm_rx0 + 8 * sc, y + fm_rh / 2, sc / 2 + 1, BROWN, WHITE);
+		else
+			HLIcon(dc, 33, fm_rx0 + 8 * sc, y + fm_rh / 2, sc / 2 + 1, BLUE, WHITE);
+		ns = sc / 2 + 1;
+		HLBig(dc, fm_rx0 + 16 * sc, y + (fm_rh - 8 * ns) / 2, fm_names[j], ns, BLACK);
+		if (!fm_dir[j])
+		{
+			if (fm_size[j] < 1024)
+				StrPrint(buf, "%d B", fm_size[j]);
+			else if (fm_size[j] < 1048576)
+				StrPrint(buf, "%d KB", fm_size[j] / 1024);
+			else
+				StrPrint(buf, "%d MB", fm_size[j] / 1048576);
+			HLBig(dc, fm_rx0 + fm_rw * 60 / 100, y + (fm_rh - 8 * (sc / 2)) / 2, buf, sc / 2, DKGRAY);
+		}
+		else
+			HLBig(dc, fm_rx0 + fm_rw * 60 / 100, y + (fm_rh - 8 * (sc / 2)) / 2, "FOLDER", sc / 2, DKGRAY);
+		Date2Struct(&ds, fm_date[j]);
+		StrPrint(buf, "%04d-%02d-%02d %02d:%02d", ds.year, ds.mon, ds.day_of_mon, ds.hour, ds.min);
+		HLBig(dc, fm_rx0 + fm_rw * 76 / 100, y + (fm_rh - 8 * (sc / 2)) / 2, buf, sc / 2, DKGRAY);
+	}
+	if (fm_n == 0)
+		HLBig(dc, fm_rx0 + 4 * sc, ly + 4 * sc, "THIS FOLDER IS EMPTY", sc, DKGRAY);
+	// scroll buttons
+	sw = 12 * sc;
+	fm_shover = 0;
+	x = w - 4 * sc - sw;
+	if (mx >= x && mx < x + sw && my >= ly && my < ly + 2 * sw)
+		fm_shover = 1;
+	if (mx >= x && mx < x + sw && my >= ly + rows * fm_rh - 2 * sw && my < ly + rows * fm_rh)
+		fm_shover = 2;
+	HLRect(dc, x, ly, sw, 2 * sw, LTBLUE);
+	HLTriUp(dc, x + sw / 2, ly + sw / 2, sw / 3, sw, WHITE);
+	HLRect(dc, x, ly + rows * fm_rh - 2 * sw, sw, 2 * sw, LTBLUE);
+	HLTriDown(dc, x + sw / 2, ly + rows * fm_rh - 2 * sw + sw / 2, sw / 3, sw, WHITE);
+	// status line
+	StrPrint(st, "%d ITEMS", fm_n);
+	if (fm_sel >= 0)
+		StrPrint(st, "%d ITEMS   SELECTED: %s   (CLICK AGAIN TO OPEN)", fm_n, fm_names[fm_ord[fm_sel]]);
+	HLBig(dc, 4 * sc, ly + rows * fm_rh + 3 * sc, st, sc / 2 + 1, DKGRAY);
+	// text input box
+	if (fm_mode)
+	{
+		x = w / 2 - 80 * sc;
+		y = h / 2 - 16 * sc;
+		HLRect(dc, x + sc, y + sc, 160 * sc, 32 * sc, DKGRAY);
+		HLRect(dc, x, y, 160 * sc, 32 * sc, WHITE);
+		HLRect(dc, x, y, 160 * sc, 3 * sc, BLUE);
+		if (fm_mode == 1)
+			HLBig(dc, x + 4 * sc, y + 5 * sc, "NEW FOLDER NAME:", sc, BLACK);
+		else
+			HLBig(dc, x + 4 * sc, y + 5 * sc, "NEW NAME:", sc, BLACK);
+		HLRect(dc, x + 4 * sc, y + 14 * sc, 152 * sc, 10 * sc, LTGRAY);
+		HLBig(dc, x + 6 * sc, y + 15 * sc, fm_input, sc, BLACK);
+		HLBig(dc, x + 4 * sc, y + 26 * sc, "ENTER = OK    ESC = CANCEL", sc / 2 + 1, DKGRAY);
+	}
+}
+
+//SPLIT
+U0 HLBuild(I64 s)
+{
+	hl_n = 0;
+	if (s == 0)
+	{
+		HLAdd("GAMES",		"", LTPURPLE, PURPLE, 20, 1, 1);
+		HLAdd("FILES",		"", YELLOW, BROWN, 32, 1, 4);
+		HLAdd("SETTINGS",	"", LTCYAN, CYAN, 21, 1, 2);
+		HLAdd("TERMINAL",	"", LTBLUE, BLUE, 3, 5, 0);
+		HLAdd("INSTALL",	"", LTGREEN, GREEN, 0, 6, 0);
+		HLAdd("HELP",		"Ed(\"::/Doc/HelpIndex.DD\");", YELLOW, BROWN, 2, 0, 0);
+		HLAdd("WELCOME",	"Ed(\"::/Doc/Welcome.DD\");", LTRED, RED, 1, 0, 0);
+	}
+	else if (s == 1)
+	{
+		HLAdd("BACK",			"", LTGRAY, DKGRAY, 29, 1, 0);
+		HLAdd("CHESS",			"ExeFile(\"::/Demo/Games/Chess\");", YELLOW, BROWN, 4, 0, 0);
+		HLAdd("TIC TAC TOE",	"ExeFile(\"::/Demo/Games/TicTacToe\");", LTRED, RED, 5, 0, 0);
+		HLAdd("TALONS",			"ExeFile(\"::/Demo/Games/Talons\");", LTBLUE, BLUE, 6, 0, 0);
+		HLAdd("BLACK DIAMOND",	"ExeFile(\"::/Demo/Games/BlackDiamond\");", LTPURPLE, PURPLE, 7, 0, 0);
+		HLAdd("FLAP BAT",		"ExeFile(\"::/Demo/Games/FlapBat\");", LTGREEN, GREEN, 8, 0, 0);
+		HLAdd("VAROOM",			"ExeFile(\"::/Demo/Games/Varoom\");", LTCYAN, CYAN, 9, 0, 0);
+		HLAdd("WENCESLAS",		"ExeFile(\"::/Demo/Games/Wenceslas\");", LTRED, RED, 10, 0, 0);
+		HLAdd("BATTLE LINES",	"ExeFile(\"::/Demo/Games/BattleLines\");", YELLOW, BROWN, 11, 0, 0);
+		HLAdd("BOMBER GOLF",	"ExeFile(\"::/Demo/Games/BomberGolf\");", LTGREEN, GREEN, 12, 0, 0);
+		HLAdd("RAIN DROPS",		"ExeFile(\"::/Demo/Games/RainDrops\");", LTCYAN, CYAN, 13, 0, 0);
+		HLAdd("ZONE OUT",		"ExeFile(\"::/Demo/Games/ZoneOut\");", LTPURPLE, PURPLE, 14, 0, 0);
+		HLAdd("ZING",			"ExeFile(\"::/Demo/Games/Zing\");", LTBLUE, BLUE, 15, 0, 0);
+		HLAdd("MAZE",			"ExeFile(\"::/Demo/Games/Maze\");", LTRED, RED, 16, 0, 0);
+		HLAdd("WHAP",			"ExeFile(\"::/Demo/Games/Whap\");", YELLOW, BROWN, 17, 0, 0);
+		HLAdd("COLLISION",		"ExeFile(\"::/Demo/Games/Collision\");", LTGREEN, GREEN, 18, 0, 0);
+		HLAdd("DIGITS",			"ExeFile(\"::/Demo/Games/Digits\");", LTCYAN, CYAN, 19, 0, 0);
+	}
+	else if (s == 2)
+	{
+		HLAdd("BACK",		"", LTGRAY, DKGRAY, 29, 1, 0);
+		HLAdd("BRIGHT",		"", YELLOW, BROWN, 22, 2, 0);
+		HLAdd("DARK",		"", LTPURPLE, PURPLE, 23, 2, 1);
+		HLAdd("CLASSIC",	"", LTCYAN, CYAN, 24, 2, 2);
+		HLAdd("CHANGE PIN",	"", LTGREEN, GREEN, 25, 7, 0);
+		HLAdd("LOCK NOW",	"", LTRED, RED, 25, 4, 0);
+	}
+}
+
+U0 HLGoto(I64 s)
+{
+	hl_screen = s;
+	if (s != 3)
+		HLBuild(s);
+	if (s == 4)
+		HLFMLoad;
+}
+
+U0 HLAskPin(I64 after)
+{
+	hl_prev = hl_screen;
+	hl_after = after;
+	hl_len = 0;
+	hl_entry[0] = 0;
+	hl_wrong = 0;
+	hl_screen = 3;
+}
+
+U0 HLDoAfter()
+{
+	if (hl_pinmode)
+	{
+		StrCopy(hl_pin, hl_entry);
+		hl_pinmode = 0;
+		HLNote("PIN changed.");
+		HLGoto(2);
+		return;
+	}
+	hl_booting = FALSE;
+	if (hl_after == 1)
+	{
+		hl_term = TRUE;
+		hl_exit = TRUE;
+	}
+	else if (hl_after == 2)
+		HLGoto(5);
+	else
+		HLGoto(0);
+}
+
+U0 HLDigit(I64 d)
+{
+	if (hl_len < 4)
+	{
+		hl_entry[hl_len] = '0' + d;
+		hl_len++;
+		hl_entry[hl_len] = 0;
+	}
+	if (hl_len == 4)
+	{
+		if (hl_pinmode || !StrCompare(hl_entry, hl_pin))
+		{
+			hl_wrong = 0;
+			HLDoAfter;
+		}
+		else
+		{
+			hl_wrong = 1;
+			hl_len = 0;
+			hl_entry[0] = 0;
+			HLNote("Wrong PIN.");
+		}
+	}
+}
+
+U0 HLBack()
+{
+	if (hl_len > 0)
+	{
+		hl_len--;
+		hl_entry[hl_len] = 0;
+	}
+}
+
+U0 HLTileClick(I64 i)
+{
+	I64 kind = hl_items[i].kind, arg = hl_items[i].arg;
+	if (kind == 0)
+	{
+		StrCopy(hl_run, hl_items[i].cmd);
+		hl_exit = TRUE;
+	}
+	else if (kind == 1)
+		HLGoto(arg);
+	else if (kind == 2)
+	{
+		HLTheme(arg);
+		HLNote("Theme changed.");
+	}
+	else if (kind == 3)
+		HLNote(hl_items[i].cmd);
+	else if (kind == 4)
+		HLAskPin(0);
+	else if (kind == 5)
+		HLAskPin(1);
+	else if (kind == 6)
+		HLAskPin(2);
+	else if (kind == 7)
+	{
+		HLAskPin(0);
+		hl_pinmode = 1;
+	}
+}
+
+U0 HLPanelClick(I64 i)
+{
+	if (i == 0)
+	{
+		HLTheme((hl_theme + 1) % 3);
+		HLNote("Theme changed.");
+	}
+	else if (i == 1)
+		HLAskPin(0);
+	else if (i == 2)
+		Reboot;
+}
+
+U0 HLNumLayout(I64 w, I64 h, I64 sc)
+{
+	I64 i, bs = 18 * sc, gap = 3 * sc, x0, y0;
+	hl_ks = bs;
+	x0 = (w - 3 * bs - 2 * gap) / 2;
+	y0 = h / 2 - 2 * bs + 2 * sc;
+	for (i = 0; i < 12; i++)
+	{
+		hl_kx[i] = x0 + (i % 3) * (bs + gap);
+		hl_ky[i] = y0 + (i / 3) * (bs + gap);
+	}
+}
+
+U0 HLDrawHeader(CDC *dc, I64 w, I64 sc, I64 hdr)
+{
+	I64 y, band;
+	CDateStruct ds;
+	for (y = 0; y < hdr; y++)
+	{
+		band = y * 8 / hdr;
+		if (band < 2)
+			dc->color = BLUE;
+		else if (band < 3)
+		{
+			if (y % 2) dc->color = BLUE; else dc->color = LTBLUE;
+		}
+		else if (band < 5)
+			dc->color = LTBLUE;
+		else if (band < 6)
+		{
+			if (y % 2) dc->color = LTBLUE; else dc->color = LTPURPLE;
+		}
+		else
+			dc->color = LTPURPLE;
+		GrRect(dc, 0, y, w, 1);
+	}
+	HLRect(dc, 0, hdr, w, 4, YELLOW);
+	HLBig(dc, 3 * sc + sc / 2, 3 * sc + sc / 2, "HOLY TEMPLEOS", sc * 2, BLACK);
+	HLBig(dc, 3 * sc, 3 * sc, "HOLY TEMPLEOS", sc * 2, WHITE);
+	HLBig(dc, 3 * sc, 3 * sc + 16 * sc + 6, "BY MINESWORD TEAM - BASED ON TEMPLEOS", sc / 2 + 1, WHITE);
+	Date2Struct(&ds, Now);
+	StrPrint(hl_clock, "%02d:%02d", ds.hour, ds.min);
+	StrPrint(hl_date, "%04d-%02d-%02d", ds.year, ds.mon, ds.day_of_mon);
+	HLBig(dc, w - HLWidth(hl_clock, sc * 2) - 3 * sc + sc / 2, 3 * sc + sc / 2, hl_clock, sc * 2, BLACK);
+	HLBig(dc, w - HLWidth(hl_clock, sc * 2) - 3 * sc, 3 * sc, hl_clock, sc * 2, WHITE);
+}
+
+U0 HLDrawLock(CDC *dc, I64 w, I64 h, I64 sc, I64 mx, I64 my)
+{
+	I64 i, x, y, hdr;
+	U8 lab[8];
+	U8 *msg;
+	hdr = 8 * sc * 2 + 8 * (sc / 2 + 1) + 8 * sc;
+	HLRect(dc, 0, 0, w, h, WHITE);
+	HLDrawHeader(dc, w, sc, hdr);
+	if (hl_pinmode)
+		msg = "ENTER A NEW 4-DIGIT PIN";
+	else
+		msg = "ENTER PIN";
+	HLBig(dc, (w - HLWidth(msg, sc)) / 2, hdr + 8 * sc, msg, sc, BLACK);
+	for (i = 0; i < 4; i++)
+	{
+		x = w / 2 - 4 * 6 * sc / 2 * 2 + i * 12 * sc;
+		if (i < hl_len)
+			HLDisc(dc, x + 3 * sc, hdr + 22 * sc, 3 * sc, BLUE);
+		else
+			HLDisc(dc, x + 3 * sc, hdr + 22 * sc, 3 * sc, LTGRAY);
+	}
+	if (hl_wrong)
+		HLBig(dc, (w - HLWidth("WRONG PIN", sc)) / 2, hdr + 28 * sc, "WRONG PIN", sc, RED);
+	HLNumLayout(w, h, sc);
+	hl_keyhover = -1;
+	for (i = 0; i < 12; i++)
+	{
+		x = hl_kx[i];
+		y = hl_ky[i];
+		if (mx >= x && mx < x + hl_ks && my >= y && my < y + hl_ks)
+			hl_keyhover = i;
+		HLRect(dc, x + sc, y + sc, hl_ks, hl_ks, LTGRAY);
+		HLRect(dc, x, y, hl_ks, hl_ks, LTBLUE);
+		if (i == hl_keyhover)
+			HLRect(dc, x, y, hl_ks, hl_ks, BLUE);
+		if (i < 9)
+			StrPrint(lab, "%d", i + 1);
+		else if (i == 9)
+			StrCopy(lab, "<");
+		else if (i == 10)
+			StrCopy(lab, "0");
+		else
+			StrCopy(lab, "OK");
+		HLBig(dc, x + (hl_ks - HLWidth(lab, sc + sc / 2)) / 2, y + (hl_ks - 12 * sc) / 2, lab, sc + sc / 2, WHITE);
+	}
+	if (!hl_booting)
+		HLBig(dc, 4 * sc, h - 7 * sc, "ESC = CANCEL", sc / 2 + 1, DKGRAY);
+	else
+		HLBig(dc, 4 * sc, h - 7 * sc, "DEFAULT PIN IS 0000 - CHANGE IT IN SETTINGS", sc / 2 + 1, DKGRAY);
+}
+
+U0 HLDrawPanel(CDC *dc, I64 w, I64 h, I64 sc, I64 mx, I64 my)
+{
+	I64 i, ph, py, bx, bw, bh, by, nx;
+	ph = 36 * sc;
+	py = h - ph;
+	HLRect(dc, 0, py - 4, w, 4, YELLOW);
+	HLRect(dc, 0, py, w, ph, LTGRAY);
+	HLBig(dc, 4 * sc, py + 3 * sc, hl_clock, sc * 2, BLACK);
+	HLBig(dc, 4 * sc, py + 3 * sc + 18 * sc, hl_date, sc, DKGRAY);
+	bw = 18 * sc;
+	bh = 22 * sc;
+	by = py + 6 * sc;
+	bx = 70 * sc;
+	hl_pbn = 3;
+	hl_pbhover = -1;
+	for (i = 0; i < 3; i++)
+	{
+		hl_pbx[i] = bx + i * (bw + 3 * sc);
+		hl_pby[i] = by;
+		hl_pbw[i] = bw;
+		hl_pbh[i] = bh;
+		if (mx >= hl_pbx[i] && mx < hl_pbx[i] + bw && my >= by && my < by + bh)
+			hl_pbhover = i;
+		HLRect(dc, hl_pbx[i], by, bw, bh, WHITE);
+		if (i == hl_pbhover)
+			HLRect(dc, hl_pbx[i], by, bw, bh, LTBLUE);
+		if (i == 0)
+		{
+			StrCopy(hl_plab, "THEME");
+			HLIcon(dc, 22, hl_pbx[i] + bw / 2, by + bh / 2 - sc, sc, BROWN, WHITE);
+		}
+		else if (i == 1)
+		{
+			StrCopy(hl_plab, "LOCK");
+			HLIcon(dc, 25, hl_pbx[i] + bw / 2, by + bh / 2 - sc, sc, GREEN, WHITE);
+		}
+		else
+		{
+			StrCopy(hl_plab, "REBOOT");
+			HLIcon(dc, 30, hl_pbx[i] + bw / 2, by + bh / 2 - sc, sc, RED, WHITE);
+		}
+		HLBig(dc, hl_pbx[i] + (bw - HLWidth(hl_plab, sc / 2 + 1)) / 2, by + bh + 2 * sc, hl_plab, sc / 2 + 1, DKGRAY);
+	}
+	nx = bx + 3 * (bw + 3 * sc) + 12 * sc;
+	HLIcon(dc, 31, nx + 3 * sc, py + 8 * sc, sc, BROWN, LTGRAY);
+	HLBig(dc, nx + 10 * sc, py + 3 * sc, "NOTIFICATIONS", sc / 2 + 1, BLACK);
+	for (i = 0; i < hl_note_n; i++)
+		HLBig(dc, nx + 10 * sc, py + 9 * sc + i * 6 * sc, hl_notes[i], sc / 2 + 1, DKGRAY);
+	if (hl_note_n == 0)
+		HLBig(dc, nx + 10 * sc, py + 9 * sc, "NO NEW NOTIFICATIONS", sc / 2 + 1, DKGRAY);
+}
+
+//SPLIT
+I64 hl_ibx[2], hl_iby[2], hl_ibw[2], hl_ibh[2], hl_ihover = -1;
+
+U0 HLDrawInstall(CDC *dc, I64 w, I64 h, I64 sc, I64 mx, I64 my, I64 hdr)
+{
+	I64 i, y, bw, bh;
+	HLBig(dc, (w - HLWidth("INSTALL HOLY TEMPLEOS", sc * 2)) / 2, hdr + 8 * sc, "INSTALL HOLY TEMPLEOS", sc * 2, BLUE);
+	y = hdr + 32 * sc;
+	HLRect(dc, 20 * sc, y, w - 40 * sc, 62 * sc, LTGRAY);
+	HLIcon(dc, 0, 34 * sc, y + 31 * sc, sc * 2, GREEN, LTGRAY);
+	HLBig(dc, 52 * sc, y + 5 * sc, "1.  THE INSTALLER ASKS WHICH DISK TO USE.", sc, BLACK);
+	HLBig(dc, 52 * sc, y + 15 * sc, "2.  IN A VIRTUAL MACHINE THE FIRST DISK IS ERASED.", sc, RED);
+	HLBig(dc, 52 * sc, y + 25 * sc, "3.  ON A REAL PC PREPARE A PARTITION FIRST.", sc, BLACK);
+	HLBig(dc, 52 * sc, y + 35 * sc, "4.  AT THE END REMOVE THE DISC AND REBOOT.", sc, BLACK);
+	HLBig(dc, 52 * sc, y + 48 * sc, "THIS NEEDS THE ZEALOS-BSD2-UEFI ISO (IT HAS THE BOOT LOADER).", sc / 2 + 1, DKGRAY);
+	bw = 110 * sc;
+	bh = 22 * sc;
+	y = y + 74 * sc;
+	hl_ihover = -1;
+	for (i = 0; i < 2; i++)
+	{
+		hl_ibx[i] = w / 2 - bw - 4 * sc + i * (bw + 8 * sc);
+		hl_iby[i] = y;
+		hl_ibw[i] = bw;
+		hl_ibh[i] = bh;
+		if (mx >= hl_ibx[i] && mx < hl_ibx[i] + bw && my >= y && my < y + bh)
+			hl_ihover = i;
+		HLRect(dc, hl_ibx[i] + sc, y + sc, bw, bh, LTGRAY);
+		if (i == 0)
+			HLRect(dc, hl_ibx[i], y, bw, bh, GREEN);
+		else
+			HLRect(dc, hl_ibx[i], y, bw, bh, RED);
+		if (i == hl_ihover)
+			HLRect(dc, hl_ibx[i], y, bw, bh, BLACK);
+		if (i == 0)
+			HLBig(dc, hl_ibx[i] + (bw - HLWidth("START INSTALL", sc)) / 2, y + (bh - 8 * sc) / 2, "START INSTALL", sc, WHITE);
+		else
+			HLBig(dc, hl_ibx[i] + (bw - HLWidth("CANCEL", sc)) / 2, y + (bh - 8 * sc) / 2, "CANCEL", sc, WHITE);
+	}
+}
+
+//SPLIT
+U0 HLDrawTiles(CDC *dc, I64 w, I64 h, I64 sc, I64 mx, I64 my, I64 hdr)
+{
+	I64 i, row, col, x, y, tw, th, gx, gy, ns, ncols, nrows, u, body;
+	gx = 4 * sc;
+	gy = hdr + 8 * sc;
+	if (hl_screen == 0)
+		ncols = 4;
+	else
+		ncols = 5;
+	nrows = (hl_n + ncols - 1) / ncols;
+	tw = (w - gx * 2 - (ncols - 1) * 3 * sc) / ncols;
+	th = (h - gy - 8 * sc - (nrows - 1) * 3 * sc) / nrows;
+	if (hl_screen == 0)
+	{
+		if (th > 90 * sc) th = 90 * sc;
+	}
+	else if (th > 50 * sc)
+		th = 50 * sc;
+
+	hl_hover = -1;
+	for (i = 0; i < hl_n; i++)
+	{
+		row = i / ncols;
+		col = i % ncols;
+		x = gx + col * (tw + 3 * sc);
+		y = gy + row * (th + 3 * sc);
+		if (mx >= x && mx < x + tw && my >= y && my < y + th)
+			hl_hover = i;
+		body = th - 12 * sc;
+		HLRect(dc, x + sc, y + sc, tw, th, LTGRAY);
+		HLRect(dc, x, y, tw, th, hl_items[i].light);
+		HLRect(dc, x, y + body, tw, th - body, hl_items[i].dark);
+		u = body * 2 / 21;
+		if (u < 2) u = 2;
+		HLIcon(dc, hl_items[i].icon, x + tw / 2, y + body / 2, u, WHITE, hl_items[i].dark);
+		ns = tw / (StrLen(hl_items[i].label) * 8);
+		if (ns > sc) ns = sc;
+		if (ns < 1) ns = 1;
+		HLBig(dc, x + (tw - HLWidth(hl_items[i].label, ns)) / 2, y + body + (th - body - 8 * ns) / 2, hl_items[i].label, ns, WHITE);
+		if (i == hl_hover)
+		{
+			dc->color = BLACK;
+			GrRect(dc, x - 3, y - 3, tw + 6, 4);
+			GrRect(dc, x - 3, y + th - 1, tw + 6, 4);
+			GrRect(dc, x - 3, y - 3, 4, th + 6);
+			GrRect(dc, x + tw - 1, y - 3, 4, th + 6);
+		}
+	}
+	HLBig(dc, 4 * sc, h - 7 * sc, "MOVE THE MOUSE TO THE BOTTOM EDGE FOR THE QUICK PANEL", sc / 2 + 1, DKGRAY);
+}
+
+U0 HLDraw(CTask *task, CDC *dc)
+{
+	I64 w = task->pix_width, h = task->pix_height;
+	I64 sc, hdr, mx, my;
+	sc = w / 400;
+	if (sc < 2) sc = 2;
+	hdr = 8 * sc * 2 + 8 * (sc / 2 + 1) + 8 * sc;
+	mx = mouse.pos.x - task->pix_left - task->scroll_x;
+	my = mouse.pos.y - task->pix_top - task->scroll_y;
+	if (hl_screen == 3)
+	{
+		HLDrawLock(dc, w, h, sc, mx, my);
+		return;
+	}
+	HLRect(dc, 0, 0, w, h, WHITE);
+	HLDrawHeader(dc, w, sc, hdr);
+	hl_hover = -1;
+	if (hl_screen == 4)
+		HLFMDraw(dc, w, h, sc, mx, my, hdr);
+	else if (hl_screen == 5)
+		HLDrawInstall(dc, w, h, sc, mx, my, hdr);
+	else
+		HLDrawTiles(dc, w, h, sc, mx, my, hdr);
+	// bottom panel opens when the mouse touches the bottom edge
+	if (my >= h - 3 * sc)
+		hl_panel = TRUE;
+	else if (my < h - 36 * sc)
+		hl_panel = FALSE;
+	if (hl_panel)
+		HLDrawPanel(dc, w, h, sc, mx, my);
+	else
+		hl_pbhover = -1;
+}
+
+//SPLIT
+U0 HLRun()
+{
+	I64 lb_prev = FALSE, k;
+	hl_exit = FALSE;
+	DocClear;
+	Fs->draw_it = &HLDraw;
+	while (!hl_exit)
+	{
+		if (KeyScan(&k))
+		{
+			if (hl_screen == 3)
+			{
+				if (k >= '0' && k <= '9')
+					HLDigit(k - '0');
+				else if (k == CH_BACKSPACE)
+					HLBack;
+				else if (k == CH_ESC && !hl_booting && !hl_pinmode)
+					HLGoto(hl_prev);
+				else if (k == CH_ESC && hl_pinmode)
+				{
+					hl_pinmode = 0;
+					HLGoto(2);
+				}
+			}
+			else if (hl_screen == 4)
+			{
+				if (k == CH_ESC && !fm_mode)
+					HLGoto(0);
+				else
+					HLFMKey(k);
+			}
+			else if (hl_screen == 0)
+			{
+				if (k == 'g')
+					HLGoto(1);
+				else if (k == 'f')
+					HLGoto(4);
+				else if (k == 's')
+					HLGoto(2);
+				else if (k == 'i')
+					HLAskPin(2);
+			}
+			else if (k == CH_ESC)
+				HLGoto(0);
+		}
+		if (mouse.lb && !lb_prev)
+		{
+			if (hl_screen == 3)
+			{
+				if (hl_keyhover >= 0 && hl_keyhover < 9)
+					HLDigit(hl_keyhover + 1);
+				else if (hl_keyhover == 10)
+					HLDigit(0);
+				else if (hl_keyhover == 9)
+					HLBack;
+			}
+			else if (hl_panel && hl_pbhover >= 0)
+				HLPanelClick(hl_pbhover);
+			else if (hl_screen == 4)
+			{
+				if (HLFMClick)
+					HLGoto(0);
+			}
+			else if (hl_screen == 5)
+			{
+				if (hl_ihover == 0)
+				{
+					StrCopy(hl_run, "HolyInstall;");
+					hl_exit = TRUE;
+					hl_screen = 0;
+					HLBuild(0);
+				}
+				else if (hl_ihover == 1)
+					HLGoto(0);
+			}
+			else if (hl_hover >= 0)
+				HLTileClick(hl_hover);
+		}
+		lb_prev = mouse.lb;
+		Refresh;
+	}
+	Fs->draw_it = NULL;
+	DocClear;
+}
+
+U0 HolyInstall()
+{
+	if (!FileFind("::/Boot/Limine-BIOS-HDD.HH"))
+	{
+		PopUpOk("This disc is live-only and cannot install.\nUse the ZealOS-BSD2-UEFI ISO to install Holy TempleOS.");
+		return;
+	}
+	DocBottom;
+	if (RunFile("::/Misc/OSInstall",, FALSE))
+	{
+		Del("C:/Home/DoDistro.ZC");
+		Del("D:/Home/DoDistro.ZC");
+		OnceDrive('C', "");
+		OnceDrive('D', "");
+		"\nInstall finished. Remove the disc, then press any key to reboot.\n";
+		PressAKey;
+		Reboot;
+	}
+}
+
+U0 HolyLauncher()
+{
+	HLTheme(0);
+	HLNote("Welcome to Holy TempleOS.");
+	HLNote("Default PIN is 0000. Change it in Settings.");
+	hl_screen = 3;
+	hl_after = 0;
+	hl_booting = TRUE;
+	hl_len = 0;
+	hl_entry[0] = 0;
+	while (TRUE)
+	{
+		HLRun;
+		if (hl_term)
+			break;
+		if (StrLen(hl_run))
+		{
+			ExePrint("%s", hl_run);
+			hl_run[0] = 0;
+		}
+	}
+}
+
+HolyLauncher;

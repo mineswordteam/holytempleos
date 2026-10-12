@@ -3,6 +3,6 @@ $WW+H,1$$FG,5$$TX+CX,"Holy TempleOS V2.00",D="DD_OS_NAME_VERSION"$$FG$
 
 $TX+CX,"Based on TempleOS - made by Minesword Team"$
 
-$LK,"Welcome / Start here",A="FI:::/Doc/Welcome.DD"$   $LK,"Install to disk",A="FI:::/Doc/Install.DD"$
+$LK,"Welcome / Start here",A="FI:::/Doc/Welcome.DD"$   $LK,"Install to disk",A="FI:::/Doc/Install.DD"$   $LK,"Games",A="FI:::/HolyGames.DD"$   $MA,"Open Holy Launcher",LM="ExeFile(\"::/Misc/HolyLauncher\");\n"$
 
 $LK,"Help & Index",A="FI:::/Doc/HelpIndex.DD"$, $LK,"Quick Start: Cmd line",A="FI:::/Doc/CmdLineOverview.DD"$

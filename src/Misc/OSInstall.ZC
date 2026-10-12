@@ -507,14 +507,18 @@ Bool DoInstall(Bool prompt_reboot)
 
 	if (StrCompare(company, "VMware, Inc.") && StrCompare(company, "innotek GmbH") && StrCompare(company, "QEMU"))
 	{
-		"\n\n\n\n\nAre you installing inside VMware, QEMU, VirtualBox or a similar virtual machine? ";
+		"\n\n\n\n\n$$FG,14$$Holy TempleOS Easy Install$$FG$$\n\n"
+		"Are you installing inside a virtual machine (VMware, VirtualBox, QEMU)?\n"
+		"If yes, the first virtual disk will be ERASED and set up automatically.\n"
+		"Say 'N' for a real computer (you must prepare a partition first).\n\n"
+		"Virtual machine ";
 		vm_install = YorN;
 	}
 	DocBottom;
 	if (vm_install)
 	{
 		"\n\nUpgrade an existing install,"
-		"\nor create new Installation? (U/I): ";
+		"\nor create new Installation?\n(I = fresh install, U = upgrade) (U/I): ";
 		do
 			ch = ToUpper(CharGet(, FALSE));
 		while (ch != 'U' && ch != 'I');
@@ -536,7 +540,7 @@ Bool DoInstall(Bool prompt_reboot)
 		if (YorN)
 		{
 			"\n\nUpgrade an existing install,"
-			"\nor create new Installation? (U/I): ";
+			"\nor create new Installation?\n(I = fresh install, U = upgrade) (U/I): ";
 			do
 				ch = ToUpper(CharGet(, FALSE));
 			while (ch != 'U' && ch != 'I');
@@ -559,7 +563,7 @@ Bool DoInstall(Bool prompt_reboot)
 	}
 	if (prompt_reboot)
 	{
-		"Reboot Now ";
+		"All done! Reboot now (remove the disc when the screen goes dark) ";
 		if (YorN)
 		{
 			DiscEject(':');

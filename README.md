@@ -1,3 +1,15 @@
+# Holy TempleOS
+
+**Holy TempleOS** is a remaster made by the **Minesword Team**. It is based on TempleOS (by Terry A. Davis) and built from the ZealOS source.
+
+- New name, modern indigo/gold palette, 1920x1080 boot resolution
+- Friendlier installer prompt and Start page
+- "Holy TempleOS Games" menu with 29 one-click games
+
+**Get the ISO:** open the *Actions* tab > *Build ZealOS ISOs* > *Run workflow*, then download the `HolyTempleOS-ISOs` artifact (or see Releases).
+
+---
+
 # ZealOS
 
 [![Discord](https://img.shields.io/discord/934200098144022609?color=7289DA&label=Discord&logo=discord&logoColor=white)](https://discord.gg/rK6U3xdr7D) [![](https://img.shields.io/badge/wiki-documentation-forestgreen)](https://zeal-operating-system.github.io/ZealOS-wiki/) [![Build ZealOS ISOs](https://github.com/Zeal-Operating-System/ZealOS/actions/workflows/build.yml/badge.svg)](https://github.com/Zeal-Operating-System/ZealOS/actions/workflows/build.yml)

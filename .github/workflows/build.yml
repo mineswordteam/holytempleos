@@ -47,28 +47,37 @@ jobs:
           ./build-iso.sh --headless
           cd ..
 
-      - name: ISO Check
-        if: ${{ success() && hashFiles('./build/*.iso') == '' }}
+      - name: Keep only the BIOS+UEFI ISO (one file for boot, test and install)
+        if: ${{ success() }}
         run: |
-          echo "ISOs not built!"
+          cd build
+          mv ZealOS-BSD2-UEFI-*.iso HolyTempleOS.iso
+          rm -f ZealOS-PublicDomain-BIOS-*.iso
+          ls -la *.iso
+          cd ..
+
+      - name: ISO Check
+        if: ${{ success() && hashFiles('./build/HolyTempleOS.iso') == '' }}
+        run: |
+          echo "ISO not built!"
           exit 1
 
-      - name: Upload ISOs (downloadable from the run page)
+      - name: Upload ISO (downloadable from the run page)
         if: ${{ success() }}
         uses: actions/upload-artifact@v4
         with:
-          name: HolyTempleOS-ISOs
-          path: ./build/*.iso
+          name: HolyTempleOS-ISO
+          path: ./build/HolyTempleOS.iso
 
-      - name: Releasing Latest ISOs
+      - name: Releasing Latest ISO
         if: ${{ success() && github.event_name == 'push'}}
         uses: "GutPuncher/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: false
-          title: "Pre-Built ISOs [${{ github.sha }}]"
-          files: ./build/*.iso
+          title: "Holy TempleOS ISO [${{ github.sha }}] (BIOS + UEFI, installer included)"
+          files: ./build/HolyTempleOS.iso
 
       - name: OK
         if: ${{ success() }}
