@@ -18,11 +18,11 @@ The $LK,"::/Misc/OSInstall.ZC"$ script will automate much of this.	It runs if yo
 
 See $LK,"Boot.DD",A="FI:::/Doc/Boot.DD"$ for an overview of booting.	See $LK,"Requirements",A="FI:::/Doc/Requirements.DD"$ for supported hardware.
 
-Two ZealOS partitions are highly recommended, so you can boot to a back-up and fix the primary when you work on it.  Odds are, you only need a couple gigabytes for your ZealOS partitions.
+Two Holy TempleOS partitions are highly recommended, so you can boot to a back-up and fix the primary when you work on it.  Odds are, you only need a couple gigabytes for your Holy TempleOS partitions.
 
 1)
 $ID,2$$LK,"Mount",A="MN:Mount"$() use if the drive is partitioned.
-$ID,2$This command mounts a drive making it accessible.  For simplicity, sel $FG,2$'C'$FG$ as the first drive letter for your hard drive.  The first partition will be $FG,2$'C'$FG$, second, $FG,2$'D'$FG$, etc.  ZealOS needs only 1 number to utilize a hard drive -- port.
+$ID,2$This command mounts a drive making it accessible.  For simplicity, sel $FG,2$'C'$FG$ as the first drive letter for your hard drive.  The first partition will be $FG,2$'C'$FG$, second, $FG,2$'D'$FG$, etc.  Holy TempleOS needs only 1 number to utilize a hard drive -- port.
 $ID,-2$
 $LK,"DiskPart",A="MN:DiskPart"$($FG,2$'C'$FG$) use if drive is not partitioned
 
@@ -44,7 +44,7 @@ $ID,2$This command is used to copy files onto a hard drive partition from the CD
 $ID,-2$4) $LK,"BootHDIns",A="MN:BootHDIns"$($FG,2$'D'$FG$)
 $ID,2$This command recompiles the source code on a drive and writes to the $UL,1$drive's$UL,0$ boot record.  You'll need to reenter the $LK,"Mount",A="MN:Mount"$ information so it can be stored in the kernel.
 
-$ID,-2$5) Use Linux's Grub or ZealOS' $LK,"BootMHDIns",A="MN:BootMHDIns"$($FG,2$'D'$FG$)
+$ID,-2$5) Use Linux's Grub or Holy TempleOS' $LK,"BootMHDIns",A="MN:BootMHDIns"$($FG,2$'D'$FG$)
 $ID,2$
 The $LK,"BootMHDIns",A="MN:BootMHDIns"$() command places a boot loader on a drive.	It saves the old master boot record to $FG,2$/Boot/OldMBR.BIN$FG$ and replaces it.	When you boot, you will have the option of booting the old master boot record.	This command can be skipped if you already have a boot loader.	Be sure not to lose the copy of the old boot record, like if you reformat the drive.
 

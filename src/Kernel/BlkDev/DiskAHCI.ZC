@@ -1175,7 +1175,7 @@ Bool AHCIBootDVDProbeAll(CBlkDev *bd)
 		}
 	}
 
-	Panic("Could not find ATAPI boot drive");
+	Panic("Boot disc not found. Attach the ISO as an optical drive on the SATA (AHCI) controller. USB boot is not supported.");
 
 	return FALSE;
 }

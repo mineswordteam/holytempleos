@@ -74,3 +74,18 @@ Step 10 - Launcher v4:
 - Graphical install page (steps + START INSTALL / CANCEL) before the existing installer; it needs the BSD2-UEFI ISO (boot loader files).
 - Keys on Home: g games, f files, s settings, i install. Esc goes back to Home from any screen.
 - NOT possible: USB flash / phone (ZealOS has no USB driver), real video/music players (no codecs, PC speaker only).
+
+Step 11 - Launcher v5 (windowed desktop):
+- Desktop (Home) is permanent: it has no close action; Esc does nothing there.
+- Apps open as windows over the desktop: GAMES, FILES, SETTINGS, INSTALL. Each window has minimize, maximize and close buttons,
+  can be moved by its title bar and resized by dragging its edges/corners, and has a button in the bottom taskbar.
+- PIN is optional: set it in Settings > SET PIN (4 digits). Without a PIN the desktop opens directly. With a PIN the lock appears at boot
+  and before TERMINAL / INSTALL. The PIN is saved to C:/Home/Holy.PIN on an installed system (on the live disc it only lasts until reboot).
+- Games, Help, Welcome and Terminal open in normal ZealOS Terminal windows (native close / resize).
+- Tested in QEMU: desktop, Files window (list, open, drag-resize from the top edge), taskbar button. Not yet tested: dragging by the title,
+  maximize/minimize, Settings > SET PIN, Install window.
+
+Step 12 - names and boot errors (after a VirtualBox / USB test):
+- Visible "ZealOS" texts in the debugger banner, boot sector, installer, Limine menu entry, docs and tours now say "Holy TempleOS".
+- Boot errors now explain the fix: "Boot disc not found. Attach the ISO as an optical drive on the SATA (AHCI) controller. USB boot is not supported."
+- VirtualBox: the ISO must be on the SATA controller as an optical drive (not IDE). ZealOS has no USB driver, so it cannot boot from a USB stick.

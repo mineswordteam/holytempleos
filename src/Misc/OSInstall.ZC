@@ -7,10 +7,10 @@
 #define LIMINE_INSTALL_PROMPT	\
 "Install the boot loader for $$YELLOW$$Holy TempleOS$$FG$$ (by Minesword Team).\n\n"\
 "Press $$GREEN$$L$$FG$$ (recommended, works on new PCs and old BIOS) or $$GREEN$$Z$$FG$$.\n\n"\
-"Install $$GREEN$$Public Domain$$FG$$ ZealOS Boot Loader,\n" \
+"Install $$GREEN$$Public Domain$$FG$$ Holy TempleOS Boot Loader,\n" \
 "or $$RED$$BSD-2 licensed$$FG$$ Limine Boot Loader?\n\n" \
-"$$DKGRAY$$ZealOS Boot Loader is written in public-domain ZealC, but only supports BIOS mode.\n\n" \
-"Limine supports UEFI and BIOS mode and multiple boot protocols, but is written in BSD-2 licensed C code, and cannot be modified within ZealOS.$$FG$$\n\n\n"
+"$$DKGRAY$$Holy TempleOS Boot Loader is written in public-domain ZealC, but only supports BIOS mode.\n\n" \
+"Limine supports UEFI and BIOS mode and multiple boot protocols, but is written in BSD-2 licensed C code, and cannot be modified within Holy TempleOS.$$FG$$\n\n\n"
 
 // TODO FIXME: refactor OSUpgrade code into optional Diff prompt to compare ISO<->HDD before Install.
 

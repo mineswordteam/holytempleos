@@ -240,9 +240,9 @@ U0 BlkDevsInitAll()
 
 	if (!blkdev.ahci_hba)
 	{
-		"\nZealOS requires AHCI.\n\n"
-		"If in IDE compatibility mode, switch to SATA mode.\n"
-		"If running in a VM, ensure disks are organized under a SATA controller.\n\n"
+		"\nHoly TempleOS requires AHCI (SATA).\n\n"
+		"On a real PC: switch the disk mode from IDE to AHCI in the BIOS.\n"
+		"In a VM (VirtualBox/QEMU): put the ISO and the disks on the SATA controller, not IDE.\n\n"
 		"Rebooting in 10 seconds...\n";
 		Sleep(10*1000);
 		Reboot;

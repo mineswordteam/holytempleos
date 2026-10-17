@@ -1,6 +1,6 @@
-$WW,1$ZealOS does master-slave multicore instead of SMP.	$FG,2$Core0$FG$ is the master.	The master core's applications explicitly assign computational jobs to other cores and the ZealOS scheduler does not move tasks between cores.
+$WW,1$Holy TempleOS does master-slave multicore instead of SMP.	$FG,2$Core0$FG$ is the master.	The master core's applications explicitly assign computational jobs to other cores and the Holy TempleOS scheduler does not move tasks between cores.
 
-There are multicore safe locks for file access and heap allocations, however, so ZealOS is symmetrical in some sense.  See $LK,"::/Demo/MultiCore/LoadTest.ZC"$.
+There are multicore safe locks for file access and heap allocations, however, so Holy TempleOS is symmetrical in some sense.  See $LK,"::/Demo/MultiCore/LoadTest.ZC"$.
 
 Only tasks on $FG,2$Core0$FG$ can have windows, but other cores can help render them.
 

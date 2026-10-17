@@ -2,7 +2,7 @@ $WW,1$$FG,5$$TX+CX,"Welcome to Holy TempleOS"$$FG$
 
 $FG,14$Holy TempleOS$FG$ is a remaster made by the $FG,14$Minesword Team$FG$. It is based on TempleOS (by Terry A. Davis).
 
-ZealOS is a x86_64, multi-cored, non-preemptive multi-tasking, ring-0-only, single-address_mapped (identity-mapped), operating system for recreational programming.  Paging is almost not used.
+Holy TempleOS is a x86_64, multi-cored, non-preemptive multi-tasking, ring-0-only, single-address_mapped (identity-mapped), operating system for recreational programming.  Paging is almost not used.
 
 The people whom can most benefit are:
 $ID,2$* Professionals doing hobby projects
@@ -11,9 +11,9 @@ $ID,2$* Professionals doing hobby projects
 $ID,-2$
 Simplicity is a goal to $LK,"keep the line count down",A="FI:::/Doc/Strategy.DD"$, so it's easy to tinker with.  As it turns-out, simplicity makes it faster in some ways, too.  It never switches privilege levels, never changes address maps, tends to load whole contiguous files and other, similar things which boost speed.	It's only $TX,"98,658",D="DD_ZEALOS_LOC"$ lines of code including the kernel, the 64-bit compiler, the graphics library and all the tools.	More importantly, it's designed to keep the user's line count down -- you can do a $LK,"Hello World",A="FI:::/Doc/HelloWorld.DD"$ application in one line of code and can put graphics on the screen with a three line program!
 
-It's a kayak, not a Titanic -- it will crash if you do something wrong.  You quickly reboot, however.  DOS and the 8-bit home computers of the 80's worked fine without memory protection and most computers in the world -- the embedded ones -- operate without protection.  The resulting simplicity of no protections is why ZealOS has value.	In facts, that's the point of ZealOS.  See the $LK,"ZealOS Charter",A="FI:::/Doc/Charter.DD"$.
+It's a kayak, not a Titanic -- it will crash if you do something wrong.  You quickly reboot, however.  DOS and the 8-bit home computers of the 80's worked fine without memory protection and most computers in the world -- the embedded ones -- operate without protection.  The resulting simplicity of no protections is why Holy TempleOS has value.	In facts, that's the point of ZealOS.  See the $LK,"Holy TempleOS Charter",A="FI:::/Doc/Charter.DD"$.
 
-Conventional thinking is "failure is not an option" for general purpose operating systems.	Since this OS is used in addition to Windows or Linux, however, failure is an option -- just use Windows or Linux if you can't do something.	We cherry-pick what it will and won't do, to make it maximally beautiful.	The following applications more or less form a basis that spans the range of use that ZealOS is intended for:
+Conventional thinking is "failure is not an option" for general purpose operating systems.	Since this OS is used in addition to Windows or Linux, however, failure is an option -- just use Windows or Linux if you can't do something.	We cherry-pick what it will and won't do, to make it maximally beautiful.	The following applications more or less form a basis that spans the range of use that Holy TempleOS is intended for:
 
 $LK,"/Demo/Games/BattleLines.ZC",A="FI:::/Demo/Games/BattleLines.ZC"$
 $LK,"/Demo/Games/BigGuns.ZC",A="FI:::/Demo/Games/BigGuns.ZC"$
@@ -49,9 +49,9 @@ $LK,"/Apps/Psalmody/Examples/childish.ZC",A="FI:::/Apps/Psalmody/Examples/childi
 $LK,"/Apps/Psalmody/Examples/night.ZC",A="FI:::/Apps/Psalmody/Examples/night.ZC"$
 $LK,"/Apps/Psalmody/Examples/prosper.ZC",A="FI:::/Apps/Psalmody/Examples/prosper.ZC"$
 
-Two things to know about ZealOS are that $UL,1$tasks$UL,0$ have $LK,"MAlloc",A="MN:MAlloc"$/$LK,"Free",A="MN:Free"$ heap memory, not applications, and tasks have compiler symbol tables that persist at a scope like environment variables in other operating systems, and the symbols can include functions.
+Two things to know about Holy TempleOS are that $UL,1$tasks$UL,0$ have $LK,"MAlloc",A="MN:MAlloc"$/$LK,"Free",A="MN:Free"$ heap memory, not applications, and tasks have compiler symbol tables that persist at a scope like environment variables in other operating systems, and the symbols can include functions.
 
-With $FG,2$ZealOS$FG$, the command line feeds right into the $LK,"ZealC",A="FI:::/Doc/ZealC.DD"$ compiler, line by line, and it places code into memory it $LK,"MAlloc",A="MN:MAlloc"$()s.	The compiler is paused at the command line, waiting for input.	Naturally, you $FG,2$#include$FG$ a program to load it into memory and, usually, start it.
+With $FG,2$Holy TempleOS$FG$, the command line feeds right into the $LK,"ZealC",A="FI:::/Doc/ZealC.DD"$ compiler, line by line, and it places code into memory it $LK,"MAlloc",A="MN:MAlloc"$()s.	The compiler is paused at the command line, waiting for input.	Naturally, you $FG,2$#include$FG$ a program to load it into memory and, usually, start it.
 
 During the boot process, many files get $LK,"compiled",A="FI:::/StartOS.ZC"$ before you have access to the command line.	(Don't worry, booting takes only two seconds.)	All the header declarations for the operating system are compiled and are available for use in your programs without needing to $FG,2$#include $FG$them.	Everything is truly compiled to native $FG,2$$TX,"x86_64",HTML="http://en.wikipedia.org/wiki/Amd64#AMD64"$$FG$ machine code, nothing is $FG,2$interpreted$FG$ and there is no $FG,2$byte code$FG$.
 
@@ -73,21 +73,21 @@ The syntax change created an ambiguity when specifying function addresses, like 
 
 Once Terry was no longer using standard C/C++ syntax, he decided to change everything he didn't like and call it $LK,"HolyC",A="FI:::/Doc/ZealC.DD"$. Here are the new $LK,"operator precedence",A="FF:::/Doc/ZealC.DD,operator precedence"$ rules. It's Biblical! See $LK,"Luke 5:37",A="BF:Luke,5:37"$.
 
-There are no object files in ZealOS and, normally, you don't make executable files either, but you can.  That's known as $LK,"Ahead-of-Time",A="FF:::/Doc/Glossary.DD,AOT Compile Mode"$ compilation.  Instead, you $LK,"Just in Time",A="FF:::/Doc/Glossary.DD,JIT Compile Mode"$ compile.
+There are no object files in Holy TempleOS and, normally, you don't make executable files either, but you can.  That's known as $LK,"Ahead-of-Time",A="FF:::/Doc/Glossary.DD,AOT Compile Mode"$ compilation.  Instead, you $LK,"Just in Time",A="FF:::/Doc/Glossary.DD,JIT Compile Mode"$ compile.
 
 Tasks have no priority and are never removed from the queue.	Instead, they often poll whatever they are waiting on and swap-out.  (Swapping tasks takes half a microsecond and does not involve disk activity or memory maps.)  See $LK,"Scheduler",A="FL:::/Kernel/Sched.ZC,1"$.	Polling keeps it simple.	It might be a problem if you had lots of tasks busy, which rarely happens on a home computer.  The order of the tasks in the queue determines front-to-back window order.
 
-The $FG,2$FAT32$FG$ filesystem is supported to makes exchanging files with a dual booted other operating system easy and there is the simple, 64-bit ZealOS $LK,"RedSea",A="FI:::/Doc/RedSea.DD"$ filesystem.  The $LK,"RedSea",A="FI:::/Doc/RedSea.DD"$ has allocation bitmap for clusters and all files are stored contiguously.	You can't grow files.
+The $FG,2$FAT32$FG$ filesystem is supported to makes exchanging files with a dual booted other operating system easy and there is the simple, 64-bit Holy TempleOS $LK,"RedSea",A="FI:::/Doc/RedSea.DD"$ filesystem.  The $LK,"RedSea",A="FI:::/Doc/RedSea.DD"$ has allocation bitmap for clusters and all files are stored contiguously.	You can't grow files.
 
-ZealOS is geared toward reading and writing whole files. There is support for direct block random access into files, however -- $LK,"FBlkRead",A="MN:FBlkRead"$() and $LK,"FBlkWrite",A="MN:FBlkWrite"$().
+Holy TempleOS is geared toward reading and writing whole files. There is support for direct block random access into files, however -- $LK,"FBlkRead",A="MN:FBlkRead"$() and $LK,"FBlkWrite",A="MN:FBlkWrite"$().
 
 There is no $FG,2$PATH$FG$, but parent directories are searched when a file is not found.	This feature is especially useful for default account files.
 
-ZealOS is for hobbyist programmers on single user (at a time) home computers, not mainframes or servers.	The focus task is all-important so symmetrical multiprocessing is almost pointless.  Why does it matter running two apps at the same time twice as fast when you really want to run one faster?  You could say ZealOS does master/slave multiprocessing.	The anticipated use for multicore is primarily putting graphics on the screen.	Hardware graphics acceleration is not used, so this is possible.	See $LK,"ZealOS MultiCore",A="FI:::/Doc/MultiCore.DD"$.
+Holy TempleOS is for hobbyist programmers on single user (at a time) home computers, not mainframes or servers.	The focus task is all-important so symmetrical multiprocessing is almost pointless.  Why does it matter running two apps at the same time twice as fast when you really want to run one faster?  You could say Holy TempleOS does master/slave multiprocessing.	The anticipated use for multicore is primarily putting graphics on the screen.	Hardware graphics acceleration is not used, so this is possible.	See $LK,"Holy TempleOS MultiCore",A="FI:::/Doc/MultiCore.DD"$.
 
-There is no distinction between the terms $FG,2$task$FG$, $FG,2$process$FG$ or $FG,2$thread$FG$.	All have a task record, $LK,"CTask",A="MN:CTask"$, pointed to by the $FG,2$FS$FG$ segment register and are accessed with $FG,4$Fs->$FG$ while $FG,4$Gs->$FG$ points to a $LK,"CCPU",A="MN:CCPU"$ for the current CPU core.  Each task can have just one window, but a task can have children with windows.  (The segment registers are just used as extra registers -- there is nothing segmented about ZealOS' memory.)  It is approximately the case that $FG,2$ZealOS$FG$ is multi-threading, single-processing.
+There is no distinction between the terms $FG,2$task$FG$, $FG,2$process$FG$ or $FG,2$thread$FG$.	All have a task record, $LK,"CTask",A="MN:CTask"$, pointed to by the $FG,2$FS$FG$ segment register and are accessed with $FG,4$Fs->$FG$ while $FG,4$Gs->$FG$ points to a $LK,"CCPU",A="MN:CCPU"$ for the current CPU core.  Each task can have just one window, but a task can have children with windows.  (The segment registers are just used as extra registers -- there is nothing segmented about Holy TempleOS' memory.)  It is approximately the case that $FG,2$Holy TempleOS$FG$ is multi-threading, single-processing.
 
-In $FG,2$ZealOS$FG$, $LK,"System Task",A="FF:::/Doc/Glossary.DD,System Task"$$FG$ refers to the father of all tasks.	It's never supposed to die.  Since tasks inherit the symbols of parents, system-wide stuff is associated with $FG,2$System$FG$.  Its heap is like kernel memory in other operating systems.  Since $FG,2$System$FG$ is immortal, it's safe to alloc objects, not tied to any mortal task, from $FG,2$System$FG$'s heap.  It stays in a server mode, taking requests, so you can ask it to $FG,2$#include$FG$ something, placing that code system-wide.  A funny story is that originally Terry Davis called it the $FG,2$root$FG$ task and even had a $FG,2$/Root$FG$ directory :-)	$FG,2$System$FG$ executes $LK,"::/StartOS.ZC"$ at boot time.
+In $FG,2$Holy TempleOS$FG$, $LK,"System Task",A="FF:::/Doc/Glossary.DD,System Task"$$FG$ refers to the father of all tasks.	It's never supposed to die.  Since tasks inherit the symbols of parents, system-wide stuff is associated with $FG,2$System$FG$.  Its heap is like kernel memory in other operating systems.  Since $FG,2$System$FG$ is immortal, it's safe to alloc objects, not tied to any mortal task, from $FG,2$System$FG$'s heap.  It stays in a server mode, taking requests, so you can ask it to $FG,2$#include$FG$ something, placing that code system-wide.  A funny story is that originally Terry Davis called it the $FG,2$root$FG$ task and even had a $FG,2$/Root$FG$ directory :-)	$FG,2$System$FG$ executes $LK,"::/StartOS.ZC"$ at boot time.
 
 For easy back-ups, place everything you author in your $FG,2$/Home$FG$ directory and subdirectories.	Then, use $LK,"CopyTree",A="MN:CopyTree"$().	That should make upgrading easy, too.  Customizable start-up scripts go in your $FG,2$/Home$FG$ directory.	The default start-up scripts are in the root directory.  Copy the start-up files you wish to customize into $FG,2$/Home$FG$ and modify them.	See $LK,"Home Files",A="FF:::/Doc/GuideLines.DD,/Home Files"$.	You can make your own distro that includes everything and is a bootable live CD with $LK,"::/Misc/DoDistro.ZC"$.
 
@@ -116,11 +116,11 @@ As you browse code, use the $FG,2$AutoComplete$FG$ window to look-up functions, 
 
 Use the $LK,"Help & Index",A="FI:::/Doc/HelpIndex.DD"$ or $LK,"Demo Index",A="FI:::/Doc/DemoIndex.DD"$ to find-out what exists.  Press $FG,2$<F1>$FG$ for help or use the links on your menu ($FG,2$<CTRL-m>$FG$).	Also, look in the $FG,2$/Demo$FG$ or $FG,2$/Apps$FG$ directories for inspiration.
 
-Software is distributed as $LK,"RedSea",A="FI:::/Doc/RedSea.DD"$ ISO files.  Burn a CD/DVD, or set your CD/DVD in $FG,2$QEMU$FG$, $FG,2$VMware$FG$ or $FG,2$VirtualBox$FG$ to the ISO file.  Then, access the $FG,2$'T'$FG$ drive.	Or, $LK,"Mount",A="MN:Mount"$() the ISO.C file and access the $FG,2$'M'$FG$ drive in ZealOS.	It must be a contiguous ISO.C file, so rename it under ZealOS to ISO.C.
+Software is distributed as $LK,"RedSea",A="FI:::/Doc/RedSea.DD"$ ISO files.  Burn a CD/DVD, or set your CD/DVD in $FG,2$QEMU$FG$, $FG,2$VMware$FG$ or $FG,2$VirtualBox$FG$ to the ISO file.  Then, access the $FG,2$'T'$FG$ drive.	Or, $LK,"Mount",A="MN:Mount"$() the ISO.C file and access the $FG,2$'M'$FG$ drive in ZealOS.	It must be a contiguous ISO.C file, so rename it under Holy TempleOS to ISO.C.
 
 Ideally, do not install applications such as games onto your hard drive because we wish to keep hard drive usage low, so the whole $FG,2$'C'$FG$ drive can be copied quickly to $FG,2$'D'$FG$.	Also, the $LK,"FileMgr",A="MN:FileMgr"$() $FG,2$<CTRL-d>$FG$ starts too slowly when there are lots of hard drive files, but that is how we want it.
 
-3rd party libraries are banned from being required, since they circumvent the 100,000 line of code limit in the $LK,"ZealOS Charter",A="FI:::/Doc/Charter.DD"$.  All applications must only depend on the core ZealOS files and whatever they bring along in the ISO.  This is similar to how Commodore 64 applications only depended on the ROM.
+3rd party libraries are banned from being required, since they circumvent the 100,000 line of code limit in the $LK,"Holy TempleOS Charter",A="FI:::/Doc/Charter.DD"$.  All applications must only depend on the core Holy TempleOS files and whatever they bring along in the ISO.  This is similar to how Commodore 64 applications only depended on the ROM.
 
 $MA-X+PU,"Take Tour",LM="User(\"Cd(\\\"::/Misc/Tour\\\");;InFile(\\\"Tour\\\");\n\");"$
 

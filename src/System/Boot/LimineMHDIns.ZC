@@ -31,7 +31,7 @@ Bool LimineCFGMake(U8 drv_let)
 			filename_zxe = MStrPrint("%C:/Boot/Kernel.ZXE", drv_let);
 			if (FileFind(filename_sys) && FileFind(filename_elf) && FileFind(filename_zxe))
 			{
-				st = MStrPrint("/ZealOS %C:/\n"
+				st = MStrPrint("/Holy TempleOS %C:/\n"
 					"protocol: limine\n"
 					"resolution: 1920x1080\n"
 					"path: boot(%d):/Boot/ZealBooter.ELF\n"
